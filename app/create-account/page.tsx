@@ -35,6 +35,12 @@ export default async function CreateAccount({
     VALUES (${userId}, ${accountType})
   `
   
-  // Redirect to dashboard
-  redirect('/dashboard')
+  // Redirect to appropriate setup page based on account type
+  if (accountType === 'club') {
+    redirect('/setup-club')
+  } else if (accountType === 'player') {
+    redirect('/setup-player')
+  } else {
+    redirect('/dashboard')
+  }
 }
