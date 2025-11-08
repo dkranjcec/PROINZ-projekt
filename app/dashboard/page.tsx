@@ -2,7 +2,6 @@ import { auth } from '@clerk/nextjs/server'
 import { redirect } from 'next/navigation'
 import sql from '@/lib/db'
 import Header from '../components/Header'
-import ClubDashboard from './ClubDashboard'
 
 export default async function Dashboard() {
   const { userId } = await auth()
@@ -20,29 +19,6 @@ export default async function Dashboard() {
     redirect('/choose-account-type')
   }
 
-  // If club, fetch club information
-  if (user.role === 'club') {
-    const [club] = await sql`
-      SELECT * FROM club WHERE userid = ${userId}
-    `
-    
-    if (!club) {
-      redirect('/setup-club')
-    }
-
-    return (
-      <>
-        <Header />
-        <div className="min-h-screen p-8 bg-gray-50">
-          <div className="max-w-7xl mx-auto">
-            <ClubDashboard userId={userId} club={club} />
-          </div>
-        </div>
-      </>
-    )
-  }
-
-  // Player dashboard
   return (
     <>
       <Header />
@@ -63,12 +39,23 @@ export default async function Dashboard() {
             </div>
           </div>
           
-          <div className="bg-blue-50 rounded-lg p-6">
-            <h2 className="text-xl font-semibold mb-2">Player Dashboard</h2>
-            <p className="text-gray-600">
-              Welcome! Here you can book courts and manage your bookings.
-            </p>
-          </div>
+          {user.role === 'player' && (
+            <div className="bg-blue-50 rounded-lg p-6">
+              <h2 className="text-xl font-semibold mb-2">Player Dashboard</h2>
+              <p className="text-gray-600">
+                Welcome! Here you can book courts and manage your bookings.
+              </p>
+            </div>
+          )}
+          
+          {user.role === 'club' && (
+            <div className="bg-green-50 rounded-lg p-6">
+              <h2 className="text-xl font-semibold mb-2">Club Dashboard</h2>
+              <p className="text-gray-600">
+                Welcome! Here you can manage your courts and bookings.
+              </p>
+            </div>
+          )}
         </div>
       </div>
     </>
