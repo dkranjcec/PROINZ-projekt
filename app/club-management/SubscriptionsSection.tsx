@@ -20,7 +20,12 @@ export default function SubscriptionsSection({ userId }: { userId: string }) {
     try {
       setIsLoading(true)
       const data = await getSubscriptions(userId)
-      setSubscriptions(data as Array<{ subid: number; subinfo: string; duration: number; price: number }>)
+      setSubscriptions(data.map(row => ({
+        subid: row.subid as number,
+        subinfo: row.subinfo as string,
+        duration: row.duration as number,
+        price: row.price as number
+      })))
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load subscriptions')
     } finally {
