@@ -22,21 +22,9 @@ export default function SetupClubForm({ userId }: { userId: string }) {
     const clubName = formData.get('clubName') as string
     const rules = formData.get('rules') as string
     
-    // Convert work hours to a format suitable for database
-    // Since DB has workhourstart and workhourend (TIME), we'll use the first non-closed day's hours
-    // Or store as JSON string if needed - for now, let's use Monday's hours as default
-    const defaultDay = Object.keys(workHours).find(day => !workHours[day].closed) || 'monday'
-    const workHourStart = workHours[defaultDay]?.start || '09:00'
-    const workHourEnd = workHours[defaultDay]?.end || '18:00'
-    
-    // Store full work hours as JSON in a hidden field or pass separately
-    // For now, we'll store the JSON representation in the address field temporarily
-    // Actually, let's update the action to accept work hours JSON
-    
     try {
-      // Convert work hours to JSON string for storage (we'll need to update the DB schema or store differently)
-      // For now, using the simple start/end approach
-      await saveClubInfo(userId, clubName, clubAddress, workHourStart, workHourEnd, rules, JSON.stringify(workHours))
+      // Pass work hours as JSON string for storage in the workhours table
+      await saveClubInfo(userId, clubName, clubAddress, rules, JSON.stringify(workHours))
       router.push('/dashboard')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to save club information')
