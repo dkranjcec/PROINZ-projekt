@@ -8,8 +8,6 @@ export async function saveClubInfo(
   userId: string,
   clubName: string,
   clubAddress: string,
-  workHourStart: string,
-  workHourEnd: string,
   rules: string,
   workHoursJson?: string
 ) {
@@ -41,9 +39,37 @@ export async function saveClubInfo(
   // Insert club information
   try {
     await sql`
-      INSERT INTO club (userid, clubname, clubaddress, workhourstart, workhourend, rules)
-      VALUES (${userId}, ${clubName}, ${clubAddress}, ${workHourStart}, ${workHourEnd}, ${rules})
+      INSERT INTO club (userid, clubname, clubaddress, rules)
+      VALUES (${userId}, ${clubName}, ${clubAddress}, ${rules})
     `
+    
+    // Insert work hours for each day if provided
+    if (workHoursJson) {
+      const workHours = JSON.parse(workHoursJson)
+      const dayMapping: Record<string, number> = {
+        'monday': 1,
+        'tuesday': 2,
+        'wednesday': 3,
+        'thursday': 4,
+        'friday': 5,
+        'saturday': 6,
+        'sunday': 7
+      }
+      
+      // Insert each day's work hours
+      for (const [day, hours] of Object.entries(workHours)) {
+        const dayOfWeek = dayMapping[day.toLowerCase()]
+        const { start, end, closed } = hours as { start: string; end: string; closed: boolean }
+        
+        // Only insert if not closed, or insert with null times if closed
+        if (!closed) {
+          await sql`
+            INSERT INTO workhours (userid, day_of_week, start_time, end_time)
+            VALUES (${userId}, ${dayOfWeek}, ${start}, ${end})
+          `
+        }
+      }
+    }
   } catch (error) {
     console.error('Error saving club information:', error)
     throw new Error('Failed to save club information to database')
