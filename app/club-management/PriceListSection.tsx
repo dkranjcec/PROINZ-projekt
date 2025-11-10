@@ -19,7 +19,11 @@ export default function PriceListSection({ userId }: { userId: string }) {
     try {
       setIsLoading(true)
       const data = await getPriceList(userId)
-      setPriceList(data as Array<{ productid: number; productname: string; price: number }>)
+      setPriceList(data.map(row => ({
+        productid: row.productid as number,
+        productname: row.productname as string,
+        price: row.price as number
+      })))
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load price list')
     } finally {

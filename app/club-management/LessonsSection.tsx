@@ -19,7 +19,11 @@ export default function LessonsSection({ userId }: { userId: string }) {
     try {
       setIsLoading(true)
       const data = await getLessons(userId)
-      setLessons(data as Array<{ lessonid: number; lessoninfo: string; price: number }>)
+      setLessons(data.map(row => ({
+        lessonid: row.lessonid as number,
+        lessoninfo: row.lessoninfo as string,
+        price: row.price as number
+      })))
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load lessons')
     } finally {
