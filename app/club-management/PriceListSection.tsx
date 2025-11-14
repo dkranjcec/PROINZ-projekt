@@ -68,6 +68,7 @@ export default function PriceListSection({ userId }: { userId: string }) {
   
   return (
     <div className="space-y-6">
+      {/* cursor composer 1 model was used */}
       <div>
         <h2 className="text-2xl font-semibold mb-4">Price List</h2>
         <p className="text-gray-600 mb-6">Manage your club's products and services pricing</p>

@@ -15,6 +15,7 @@ function DeleteConfirmDialog({ isOpen, onClose, onConfirm, photoUrl }: DeleteCon
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
+      {/* cursor composer 1 model was used */}
       {/* Backdrop */}
       <div 
         className="absolute inset-0 bg-black bg-opacity-50 transition-opacity"
@@ -191,6 +192,7 @@ export default function PhotosSection({ userId }: { userId: string }) {
   
   return (
     <div className="space-y-6">
+      {/* cursor composer 1 model was used */}
       <div>
         <h2 className="text-2xl font-semibold mb-4">Club Photos</h2>
         <p className="text-gray-600 mb-6">Upload photos by dragging and dropping or selecting files</p>
