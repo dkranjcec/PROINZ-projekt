@@ -20,6 +20,7 @@ export default function ClubManagementTabs({ userId }: { userId: string }) {
   
   return (
     <div className="bg-white rounded-lg shadow-lg">
+      {/* cursor composer 1 model was used */}
       <div className="border-b border-gray-200">
         <nav className="flex space-x-8 px-6" aria-label="Tabs">
           {tabs.map((tab) => (

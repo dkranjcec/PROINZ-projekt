@@ -47,6 +47,7 @@ export default function ContentSection({ userId }: { userId: string }) {
   
   return (
     <div className="space-y-6">
+      {/* cursor composer 1 model was used */}
       <div>
         <h2 className="text-2xl font-semibold mb-4">Club Content</h2>
         <p className="text-gray-600 mb-6">Add or edit your club's content and description</p>

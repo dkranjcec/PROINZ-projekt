@@ -35,6 +35,7 @@ export default async function ClubManagement() {
   
   return (
     <>
+      {/* cursor composer 1 model was used */}
       <Header />
       <div className="min-h-screen p-8">
         <div className="max-w-6xl mx-auto">
