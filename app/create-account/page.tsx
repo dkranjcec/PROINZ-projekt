@@ -20,22 +20,29 @@ export default async function CreateAccount({
     redirect('/choose-account-type')
   }
   
-  // Check if user already exists
+  
   const [existingUser] = await sql`
     SELECT * FROM users WHERE userid = ${userId}
   `
   
   if (existingUser) {
-    redirect('/dashboard')
+    
+    if (existingUser.role === 'club') {
+      redirect('/club-dashboard')
+    } else {
+      redirect('/dashboard')
+    }
   }
   
-  // Create the user in the database
-  await sql`
-    INSERT INTO users (userid, role)
-    VALUES (${userId}, ${accountType})
-  `
+  try {
+    await sql`
+      INSERT INTO users (userid, role)
+      VALUES (${userId}, ${accountType})
+    `
+  } catch (error) {
+    console.log('User may already exist, continuing...')
+  }
   
-  // Redirect to appropriate setup page based on account type
   if (accountType === 'club') {
     redirect('/setup-club')
   } else if (accountType === 'player') {

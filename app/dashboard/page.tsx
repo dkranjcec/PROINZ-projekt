@@ -10,7 +10,6 @@ export default async function Dashboard() {
     redirect('/')
   }
   
-  // Check if user exists in database
   const [user] = await sql`
     SELECT * FROM users WHERE userid = ${userId}
   `
@@ -19,12 +18,16 @@ export default async function Dashboard() {
     redirect('/choose-account-type')
   }
 
+  if (user.role === 'club') {
+    redirect('/club-dashboard')
+  }
+
   return (
     <>
       <Header />
       <div className="min-h-screen p-8">
         <div className="max-w-4xl mx-auto">
-          <h1 className="text-3xl font-bold mb-6">Dashboard</h1>
+          <h1 className="text-3xl font-bold mb-6">Player Dashboard</h1>
           
           <div className="bg-white rounded-lg shadow p-6 mb-6">
             <h2 className="text-xl font-semibold mb-4">Your Account</h2>
@@ -39,23 +42,12 @@ export default async function Dashboard() {
             </div>
           </div>
           
-          {user.role === 'player' && (
-            <div className="bg-blue-50 rounded-lg p-6">
-              <h2 className="text-xl font-semibold mb-2">Player Dashboard</h2>
-              <p className="text-gray-600">
-                Welcome! Here you can book courts and manage your bookings.
-              </p>
-            </div>
-          )}
-          
-          {user.role === 'club' && (
-            <div className="bg-green-50 rounded-lg p-6">
-              <h2 className="text-xl font-semibold mb-2">Club Dashboard</h2>
-              <p className="text-gray-600">
-                Welcome! Here you can manage your courts and bookings.
-              </p>
-            </div>
-          )}
+          <div className="bg-blue-50 rounded-lg p-6">
+            <h2 className="text-xl font-semibold mb-2">Welcome, Player!</h2>
+            <p className="text-gray-600">
+              Here you can book courts and manage your bookings.
+            </p>
+          </div>
         </div>
       </div>
     </>

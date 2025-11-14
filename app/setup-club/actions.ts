@@ -11,14 +11,14 @@ export async function saveClubInfo(
   rules: string,
   workHoursJson?: string
 ) {
-  // Verify the user is authenticated
+
   const { userId: authUserId } = await auth()
   
   if (!authUserId || authUserId !== userId) {
     throw new Error('Unauthorized')
   }
   
-  // Verify user is a club
+
   const [user] = await sql`
     SELECT * FROM users WHERE userid = ${userId}
   `
@@ -27,7 +27,7 @@ export async function saveClubInfo(
     throw new Error('User is not a club')
   }
   
-  // Check if club already exists
+
   const [existingClub] = await sql`
     SELECT * FROM club WHERE userid = ${userId}
   `
@@ -36,14 +36,12 @@ export async function saveClubInfo(
     throw new Error('Club information already exists')
   }
   
-  // Insert club information
   try {
     await sql`
       INSERT INTO club (userid, clubname, clubaddress, rules)
       VALUES (${userId}, ${clubName}, ${clubAddress}, ${rules})
     `
     
-    // Insert work hours for each day if provided
     if (workHoursJson) {
       const workHours = JSON.parse(workHoursJson)
       const dayMapping: Record<string, number> = {
@@ -56,12 +54,10 @@ export async function saveClubInfo(
         'sunday': 7
       }
       
-      // Insert each day's work hours
       for (const [day, hours] of Object.entries(workHours)) {
         const dayOfWeek = dayMapping[day.toLowerCase()]
         const { start, end, closed } = hours as { start: string; end: string; closed: boolean }
         
-        // Only insert if not closed, or insert with null times if closed
         if (!closed) {
           await sql`
             INSERT INTO workhours (userid, day_of_week, start_time, end_time)

@@ -8,7 +8,6 @@ export default async function SetupPlayer() {
     redirect('/')
   }
   
-  // Placeholder - will be implemented later
   return (
     <div className="min-h-screen flex items-center justify-center p-8">
       <div className="max-w-2xl w-full">

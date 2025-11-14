@@ -3,7 +3,6 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { saveClubInfo } from './actions'
-import AddressAutocomplete from './AddressAutocomplete'
 import WorkHoursSelector from './WorkHoursSelector'
 
 export default function SetupClubForm({ userId }: { userId: string }) {
@@ -25,7 +24,7 @@ export default function SetupClubForm({ userId }: { userId: string }) {
     try {
       // Pass work hours as JSON string for storage in the workhours table
       await saveClubInfo(userId, clubName, clubAddress, rules, JSON.stringify(workHours))
-      router.push('/dashboard')
+      router.push('/club-dashboard')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to save club information')
       setIsSubmitting(false)
@@ -58,15 +57,15 @@ export default function SetupClubForm({ userId }: { userId: string }) {
         <label htmlFor="clubAddress" className="block text-sm font-medium text-gray-700 mb-2">
           Club Address *
         </label>
-        <AddressAutocomplete
-          value={clubAddress}
-          onChange={setClubAddress}
-        />
         <input
-          type="hidden"
+          type="text"
+          id="clubAddress"
           name="clubAddress"
           value={clubAddress}
+          onChange={(e) => setClubAddress(e.target.value)}
           required
+          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+          placeholder="Enter your club address"
         />
       </div>
       

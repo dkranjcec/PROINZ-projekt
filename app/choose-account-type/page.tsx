@@ -20,7 +20,6 @@ export default async function ChooseAccountType() {
         </p>
         
         <div className="grid md:grid-cols-2 gap-6">
-          {/* Player Account */}
           <Link href="/create-account?type=player">
             <div className="border-2 border-gray-200 rounded-lg p-8 hover:border-blue-500 hover:shadow-lg transition-all cursor-pointer">
               <div className="text-4xl mb-4">🎾</div>
@@ -31,7 +30,6 @@ export default async function ChooseAccountType() {
             </div>
           </Link>
           
-          {/* Club Account */}
           <Link href="/create-account?type=club">
             <div className="border-2 border-gray-200 rounded-lg p-8 hover:border-green-500 hover:shadow-lg transition-all cursor-pointer">
               <div className="text-4xl mb-4">🏢</div>

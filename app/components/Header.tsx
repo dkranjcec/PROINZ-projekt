@@ -9,7 +9,6 @@ export default function Header() {
         </div>
         
         <div className="flex items-center gap-4">
-          {/* Show Sign In button when user is NOT logged in */}
           <SignedOut>
             <SignInButton mode="modal">
               <button className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
@@ -18,7 +17,6 @@ export default function Header() {
             </SignInButton>
           </SignedOut>
           
-          {/* Show User button when user IS logged in */}
           <SignedIn>
             <UserButton afterSignOutUrl="/" />
           </SignedIn>

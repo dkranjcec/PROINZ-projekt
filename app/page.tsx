@@ -6,15 +6,19 @@ import Header from './components/Header'
 export default async function Home() {
   const { userId } = await auth()
   
-  // If user is logged in, check if they exist in our database
   if (userId) {
     const [existingUser] = await sql`
       SELECT * FROM users WHERE userid = ${userId}
     `
     
-    // If user doesn't exist in DB, redirect to account type selection
     if (!existingUser) {
       redirect('/choose-account-type')
+    }
+    
+    if (existingUser.role === 'club') {
+      redirect('/club-dashboard')
+    } else if (existingUser.role === 'player') {
+      redirect('/dashboard')
     }
   }
 
