@@ -10,7 +10,7 @@ export default async function SetupClub() {
     redirect('/')
   }
   
-  // Check if user exists and is a club
+
   const [user] = await sql`
     SELECT * FROM users WHERE userid = ${userId}
   `
@@ -23,14 +23,13 @@ export default async function SetupClub() {
     redirect('/dashboard')
   }
   
-  // Check if club information already exists
   const [existingClub] = await sql`
     SELECT * FROM club WHERE userid = ${userId}
   `
   
-  // If club info already exists, redirect to dashboard
+
   if (existingClub) {
-    redirect('/dashboard')
+    redirect('/club-dashboard')
   }
   
   return (
