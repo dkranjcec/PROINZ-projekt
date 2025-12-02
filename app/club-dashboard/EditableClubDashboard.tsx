@@ -3,6 +3,9 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 
+
+// AI korišten za pomoć pri stvaranju editable dashboarda
+
 interface EditableClubDashboardProps {
   club: any
   workHours: any[]
@@ -24,6 +27,10 @@ export default function EditableClubDashboard({ club, workHours, content, clubPh
   const [error, setError] = useState<string | null>(null)
 
   const dayNames = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+
+  function formatTime(time: string) {
+    return time.substring(0, 5)
+  }
 
   function updateWorkHour(dayOfWeek: number, field: 'start_time' | 'end_time', value: string) {
     setEditableWorkHours(prev => 
@@ -53,7 +60,7 @@ export default function EditableClubDashboard({ club, workHours, content, clubPh
 
   function getAvailableDays() {
     const usedDays = editableWorkHours.map(wh => wh.day_of_week)
-    return dayNames.map((name, index) => ({ index, name })).filter(day => !usedDays.includes(day.index))
+    return dayNames.map((name, index) => ({ index: index + 1, name })).filter(day => !usedDays.includes(day.index))
   }
 
   async function handlePhotoUpload(e: React.ChangeEvent<HTMLInputElement>) {
@@ -208,7 +215,7 @@ export default function EditableClubDashboard({ club, workHours, content, clubPh
           <div className="space-y-3">
             {editableWorkHours.map((wh: any) => (
               <div key={wh.day_of_week} className="flex justify-between items-center py-2 border-b border-gray-100 last:border-0">
-                <span className="font-medium text-gray-700 w-32">{dayNames[wh.day_of_week]}</span>
+                <span className="font-medium text-gray-700 w-32">{dayNames[wh.day_of_week - 1]}</span>
                 {isEditing ? (
                   <div className="flex gap-2 items-center">
                     <input
@@ -232,7 +239,7 @@ export default function EditableClubDashboard({ club, workHours, content, clubPh
                     </button>
                   </div>
                 ) : (
-                  <span className="text-gray-600">{wh.start_time} - {wh.end_time}</span>
+                  <span className="text-gray-600">{formatTime(wh.start_time)} - {formatTime(wh.end_time)}</span>
                 )}
               </div>
             ))}
