@@ -44,24 +44,12 @@ export async function saveClubInfo(
     
     if (workHoursJson) {
       const workHours = JSON.parse(workHoursJson)
-      const dayMapping: Record<string, number> = {
-        'monday': 1,
-        'tuesday': 2,
-        'wednesday': 3,
-        'thursday': 4,
-        'friday': 5,
-        'saturday': 6,
-        'sunday': 7
-      }
       
-      for (const [day, hours] of Object.entries(workHours)) {
-        const dayOfWeek = dayMapping[day.toLowerCase()]
-        const { start, end, closed } = hours as { start: string; end: string; closed: boolean }
-        
-        if (!closed) {
+      if (Array.isArray(workHours)) {
+        for (const wh of workHours) {
           await sql`
             INSERT INTO workhours (userid, day_of_week, start_time, end_time)
-            VALUES (${userId}, ${dayOfWeek}, ${start}, ${end})
+            VALUES (${userId}, ${wh.day_of_week}, ${wh.start_time}, ${wh.end_time})
           `
         }
       }

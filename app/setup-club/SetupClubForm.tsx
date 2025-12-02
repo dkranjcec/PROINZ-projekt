@@ -3,14 +3,47 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { saveClubInfo } from './actions'
-import WorkHoursSelector from './WorkHoursSelector'
+
+// AI korišten za pomoć pri stvaranju forme
 
 export default function SetupClubForm({ userId }: { userId: string }) {
   const router = useRouter()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [clubAddress, setClubAddress] = useState('')
-  const [workHours, setWorkHours] = useState<Record<string, { start: string; end: string; closed: boolean }>>({})
+  const [workHours, setWorkHours] = useState<Array<{ day_of_week: number; start_time: string; end_time: string }>>([])
+
+  const dayNames = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+
+  function updateWorkHour(dayOfWeek: number, field: 'start_time' | 'end_time', value: string) {
+    setWorkHours(prev => 
+      prev.map(wh => 
+        wh.day_of_week === dayOfWeek 
+          ? { ...wh, [field]: value }
+          : wh
+      )
+    )
+  }
+
+  function addWorkHour(dayOfWeek: number) {
+    setWorkHours(prev => [
+      ...prev,
+      {
+        day_of_week: dayOfWeek,
+        start_time: '09:00',
+        end_time: '17:00'
+      }
+    ].sort((a, b) => a.day_of_week - b.day_of_week))
+  }
+
+  function removeWorkHour(dayOfWeek: number) {
+    setWorkHours(prev => prev.filter(wh => wh.day_of_week !== dayOfWeek))
+  }
+
+  function getAvailableDays() {
+    const usedDays = workHours.map(wh => wh.day_of_week)
+    return dayNames.map((name, index) => ({ index: index + 1, name })).filter(day => !usedDays.includes(day.index))
+  }
   
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -22,7 +55,6 @@ export default function SetupClubForm({ userId }: { userId: string }) {
     const rules = formData.get('rules') as string
     
     try {
-      // Pass work hours as JSON string for storage in the workhours table
       await saveClubInfo(userId, clubName, clubAddress, rules, JSON.stringify(workHours))
       router.push('/club-dashboard')
     } catch (err) {
@@ -73,9 +105,57 @@ export default function SetupClubForm({ userId }: { userId: string }) {
         <label className="block text-sm font-medium text-gray-700 mb-2">
           Work Hours *
         </label>
-        <WorkHoursSelector
-          onChange={setWorkHours}
-        />
+        {workHours.length > 0 ? (
+          <div className="space-y-3 mb-4">
+            {workHours.map((wh) => (
+              <div key={wh.day_of_week} className="flex justify-between items-center py-2 border-b border-gray-100 last:border-0">
+                <span className="font-medium text-gray-700 w-32">{dayNames[wh.day_of_week - 1]}</span>
+                <div className="flex gap-2 items-center">
+                  <input
+                    type="time"
+                    value={wh.start_time}
+                    onChange={(e) => updateWorkHour(wh.day_of_week, 'start_time', e.target.value)}
+                    className="px-3 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-green-500"
+                  />
+                  <span className="text-gray-500">-</span>
+                  <input
+                    type="time"
+                    value={wh.end_time}
+                    onChange={(e) => updateWorkHour(wh.day_of_week, 'end_time', e.target.value)}
+                    className="px-3 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-green-500"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => removeWorkHour(wh.day_of_week)}
+                    className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 text-sm"
+                  >
+                    Remove
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-gray-500 mb-4">No work hours set. Add at least one day.</p>
+        )}
+        
+        {getAvailableDays().length > 0 && (
+          <div className="pt-4 border-t border-gray-200">
+            <p className="text-sm font-medium text-gray-700 mb-2">Add Day:</p>
+            <div className="flex flex-wrap gap-2">
+              {getAvailableDays().map(day => (
+                <button
+                  key={day.index}
+                  type="button"
+                  onClick={() => addWorkHour(day.index)}
+                  className="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600 text-sm"
+                >
+                  + {day.name}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
       
       <div>
