@@ -2,6 +2,9 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { Button } from '@/components/ui/button'
+import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group'
+import { BookOpen, Calendar } from 'lucide-react'
 
 interface EditableClubServicesProps {
   club: any
@@ -34,7 +37,7 @@ export default function EditableClubServices({ club, priceList, lessons, subscri
     if (newProductName.trim() && newProductPrice) {
       setEditablePriceList(prev => [{
         productname: newProductName,
-        price: parseFloat(newProductPrice),
+        price: parseFloat(newProductPrice.replace(',', '.')),
         userid: club.userid,
         productid: Date.now() // temporary ID
       }, ...prev])
@@ -51,7 +54,7 @@ export default function EditableClubServices({ club, priceList, lessons, subscri
     if (newLessonInfo.trim() && newLessonPrice) {
       setEditableLessons(prev => [{
         lessoninfo: newLessonInfo,
-        price: parseFloat(newLessonPrice),
+        price: parseFloat(newLessonPrice.replace(',', '.')),
         userid: club.userid,
         lessonid: Date.now()
       }, ...prev])
@@ -69,7 +72,7 @@ export default function EditableClubServices({ club, priceList, lessons, subscri
       setEditableSubscriptions(prev => [{
         subinfo: newSubInfo,
         duration: parseInt(newSubDuration),
-        price: parseFloat(newSubPrice),
+        price: parseFloat(newSubPrice.replace(',', '.')),
         userid: club.userid,
         subid: Date.now()
       }, ...prev])
@@ -136,28 +139,28 @@ export default function EditableClubServices({ club, priceList, lessons, subscri
 
       <div className="flex justify-end mb-4">
         {!isEditing ? (
-          <button
+          <Button
             onClick={() => setIsEditing(true)}
-            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+            className="bg-green-600 hover:bg-green-700"
           >
             Edit Services
-          </button>
+          </Button>
         ) : (
           <div className="space-x-2">
-            <button
+            <Button
               onClick={handleCancel}
               disabled={isSaving}
-              className="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 disabled:opacity-50"
+              variant="secondary"
             >
               Cancel
-            </button>
-            <button
+            </Button>
+            <Button
               onClick={handleSave}
               disabled={isSaving}
-              className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50"
+              className="bg-green-600 hover:bg-green-700"
             >
               {isSaving ? 'Saving...' : 'Save Changes'}
-            </button>
+            </Button>
           </div>
         )}
       </div>
@@ -168,18 +171,51 @@ export default function EditableClubServices({ club, priceList, lessons, subscri
         {editablePriceList && editablePriceList.length > 0 ? (
           <div className="space-y-2 mb-4">
             {editablePriceList.map((item: any, index: number) => (
-              <div key={index} className="flex justify-between items-center p-3 border border-gray-200 rounded-lg bg-gray-50">
-                <div>
-                  <span className="font-medium text-gray-900">{item.productname}</span>
-                  <span className="text-gray-600 ml-4">€{item.price}</span>
-                </div>
-                {isEditing && (
-                  <button
-                    onClick={() => removePriceItem(index)}
-                    className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 text-sm"
-                  >
-                    Remove
-                  </button>
+              <div key={index} className="flex gap-2 items-center">
+                {isEditing ? (
+                  <>
+                    <InputGroup className="flex-1">
+                      <InputGroupInput
+                        type="text"
+                        value={item.productname}
+                        onChange={(e) => {
+                          const updated = [...editablePriceList]
+                          updated[index].productname = e.target.value
+                          setEditablePriceList(updated)
+                        }}
+                        placeholder="Product name..."
+                      />
+                    </InputGroup>
+                    <InputGroup className="w-32">
+                      <InputGroupInput
+                        type="text"
+                        value={item.price}
+                        onChange={(e) => {
+                          const updated = [...editablePriceList]
+                          updated[index].price = e.target.value
+                          setEditablePriceList(updated)
+                        }}
+                        onBlur={(e) => {
+                          const updated = [...editablePriceList]
+                          updated[index].price = parseFloat(e.target.value.replace(',', '.')) || 0
+                          setEditablePriceList(updated)
+                        }}
+                        placeholder="Price..."
+                      />
+                    </InputGroup>
+                    <Button
+                      onClick={() => removePriceItem(index)}
+                      variant="destructive"
+                      size="sm"
+                    >
+                      Remove
+                    </Button>
+                  </>
+                ) : (
+                  <div className="flex-1 p-3 border border-gray-200 rounded-lg bg-gray-50 flex justify-between items-center">
+                    <span className="font-medium text-gray-900">{item.productname}</span>
+                    <span className="text-gray-600">€{item.price}</span>
+                  </div>
                 )}
               </div>
             ))}
@@ -192,28 +228,29 @@ export default function EditableClubServices({ club, priceList, lessons, subscri
           <div className="pt-4 border-t border-gray-200">
             <p className="text-sm font-medium text-gray-700 mb-2">Add Item:</p>
             <div className="flex gap-2">
-              <input
-                type="text"
-                value={newProductName}
-                onChange={(e) => setNewProductName(e.target.value)}
-                placeholder="Product name..."
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
-              />
-              <input
-                type="number"
-                step="0.01"
-                value={newProductPrice}
-                onChange={(e) => setNewProductPrice(e.target.value)}
-                placeholder="Price..."
-                className="w-32 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
-              />
-              <button
+              <InputGroup className="flex-1">
+                <InputGroupInput
+                  type="text"
+                  value={newProductName}
+                  onChange={(e) => setNewProductName(e.target.value)}
+                  placeholder="Product name..."
+                />
+              </InputGroup>
+              <InputGroup className="w-32">
+                <InputGroupInput
+                  type="text"
+                  value={newProductPrice}
+                  onChange={(e) => setNewProductPrice(e.target.value)}
+                  placeholder="Price..."
+                />
+              </InputGroup>
+              <Button
                 onClick={addPriceItem}
                 disabled={!newProductName.trim() || !newProductPrice}
-                className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 disabled:opacity-50"
+                className="bg-green-500 hover:bg-green-600"
               >
                 Add
-              </button>
+              </Button>
             </div>
           </div>
         )}
@@ -224,18 +261,54 @@ export default function EditableClubServices({ club, priceList, lessons, subscri
         {editableLessons && editableLessons.length > 0 ? (
           <div className="space-y-2 mb-4">
             {editableLessons.map((item: any, index: number) => (
-              <div key={index} className="flex justify-between items-center p-3 border border-gray-200 rounded-lg bg-gray-50">
-                <div>
-                  <span className="font-medium text-gray-900">{item.lessoninfo}</span>
-                  <span className="text-gray-600 ml-4">€{item.price}</span>
-                </div>
-                {isEditing && (
-                  <button
-                    onClick={() => removeLesson(index)}
-                    className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 text-sm"
-                  >
-                    Remove
-                  </button>
+              <div key={index} className="flex gap-2 items-center">
+                {isEditing ? (
+                  <>
+                    <InputGroup className="flex-1">
+                      <InputGroupAddon>
+                        <BookOpen className="size-4" />
+                      </InputGroupAddon>
+                      <InputGroupInput
+                        type="text"
+                        value={item.lessoninfo}
+                        onChange={(e) => {
+                          const updated = [...editableLessons]
+                          updated[index].lessoninfo = e.target.value
+                          setEditableLessons(updated)
+                        }}
+                        placeholder="Lesson info..."
+                      />
+                    </InputGroup>
+                    <InputGroup className="w-32">
+                      <InputGroupInput
+                        type="text"
+                        value={item.price}
+                        onChange={(e) => {
+                          const updated = [...editableLessons]
+                          updated[index].price = e.target.value
+                          setEditableLessons(updated)
+                        }}
+                        onBlur={(e) => {
+                          const updated = [...editableLessons]
+                          updated[index].price = parseFloat(e.target.value.replace(',', '.')) || 0
+                          setEditableLessons(updated)
+                        }}
+                        placeholder="Price..."
+                      />
+                    </InputGroup>
+                    <Button
+                      onClick={() => removeLesson(index)}
+                      variant="destructive"
+                      size="sm"
+                    >
+                      Remove
+                    </Button>
+                  </>
+                ) : (
+                  <div className="flex-1 p-3 border border-gray-200 rounded-lg bg-gray-50 flex justify-between items-center">
+                    <span className="font-medium text-gray-900">{item.lessoninfo}</span>
+                    <span className="text-gray-600">€{item.price}</span>
+                  </div>
                 )}
               </div>
             ))}
@@ -248,28 +321,32 @@ export default function EditableClubServices({ club, priceList, lessons, subscri
           <div className="pt-4 border-t border-gray-200">
             <p className="text-sm font-medium text-gray-700 mb-2">Add Lesson:</p>
             <div className="flex gap-2">
-              <input
-                type="text"
-                value={newLessonInfo}
-                onChange={(e) => setNewLessonInfo(e.target.value)}
-                placeholder="Lesson info..."
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
-              />
-              <input
-                type="number"
-                step="0.01"
-                value={newLessonPrice}
-                onChange={(e) => setNewLessonPrice(e.target.value)}
-                placeholder="Price..."
-                className="w-32 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
-              />
-              <button
+              <InputGroup className="flex-1">
+                <InputGroupAddon>
+                  <BookOpen className="size-4" />
+                </InputGroupAddon>
+                <InputGroupInput
+                  type="text"
+                  value={newLessonInfo}
+                  onChange={(e) => setNewLessonInfo(e.target.value)}
+                  placeholder="Lesson info..."
+                />
+              </InputGroup>
+              <InputGroup className="w-32">
+                <InputGroupInput
+                  type="text"
+                  value={newLessonPrice}
+                  onChange={(e) => setNewLessonPrice(e.target.value)}
+                  placeholder="Price..."
+                />
+              </InputGroup>
+              <Button
                 onClick={addLesson}
                 disabled={!newLessonInfo.trim() || !newLessonPrice}
-                className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 disabled:opacity-50"
+                className="bg-green-500 hover:bg-green-600"
               >
                 Add
-              </button>
+              </Button>
             </div>
           </div>
         )}
@@ -280,19 +357,74 @@ export default function EditableClubServices({ club, priceList, lessons, subscri
         {editableSubscriptions && editableSubscriptions.length > 0 ? (
           <div className="space-y-2 mb-4">
             {editableSubscriptions.map((item: any, index: number) => (
-              <div key={index} className="flex justify-between items-center p-3 border border-gray-200 rounded-lg bg-gray-50">
-                <div>
-                  <span className="font-medium text-gray-900">{item.subinfo}</span>
-                  <span className="text-gray-600 ml-4">{item.duration} days</span>
-                  <span className="text-gray-600 ml-4">€{item.price}</span>
-                </div>
-                {isEditing && (
-                  <button
-                    onClick={() => removeSubscription(index)}
-                    className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 text-sm"
-                  >
-                    Remove
-                  </button>
+              <div key={index} className="flex gap-2 items-center">
+                {isEditing ? (
+                  <>
+                    <InputGroup className="flex-1">
+                      <InputGroupInput
+                        type="text"
+                        value={item.subinfo}
+                        onChange={(e) => {
+                          const updated = [...editableSubscriptions]
+                          updated[index].subinfo = e.target.value
+                          setEditableSubscriptions(updated)
+                        }}
+                        placeholder="Subscription info..."
+                      />
+                    </InputGroup>
+                    <InputGroup className="w-28">
+                      <InputGroupAddon>
+                        <Calendar className="size-4" />
+                      </InputGroupAddon>
+                      <InputGroupInput
+                        type="text"
+                        value={item.duration}
+                        onChange={(e) => {
+                          const updated = [...editableSubscriptions]
+                          updated[index].duration = e.target.value
+                          setEditableSubscriptions(updated)
+                        }}
+                        onBlur={(e) => {
+                          const updated = [...editableSubscriptions]
+                          updated[index].duration = parseInt(e.target.value) || 0
+                          setEditableSubscriptions(updated)
+                        }}
+                        placeholder="Days..."
+                      />
+                    </InputGroup>
+                    <InputGroup className="w-32">
+                      <InputGroupInput
+                        type="text"
+                        value={item.price}
+                        onChange={(e) => {
+                          const updated = [...editableSubscriptions]
+                          updated[index].price = e.target.value
+                          setEditableSubscriptions(updated)
+                        }}
+                        onBlur={(e) => {
+                          const updated = [...editableSubscriptions]
+                          updated[index].price = parseFloat(e.target.value.replace(',', '.')) || 0
+                          setEditableSubscriptions(updated)
+                        }}
+                        placeholder="Price..."
+                      />
+                    </InputGroup>
+                    <Button
+                      onClick={() => removeSubscription(index)}
+                      variant="destructive"
+                      size="sm"
+                    >
+                      Remove
+                    </Button>
+                  </>
+                ) : (
+                  <div className="flex-1 p-3 border border-gray-200 rounded-lg bg-gray-50 flex justify-between items-center">
+                    <span className="font-medium text-gray-900">{item.subinfo}</span>
+                    <div className="flex gap-4">
+                      <span className="text-gray-600">{item.duration} days</span>
+                      <span className="text-gray-600">€{item.price}</span>
+                    </div>
+                  </div>
                 )}
               </div>
             ))}
@@ -305,35 +437,40 @@ export default function EditableClubServices({ club, priceList, lessons, subscri
           <div className="pt-4 border-t border-gray-200">
             <p className="text-sm font-medium text-gray-700 mb-2">Add Subscription:</p>
             <div className="flex gap-2">
-              <input
-                type="text"
-                value={newSubInfo}
-                onChange={(e) => setNewSubInfo(e.target.value)}
-                placeholder="Subscription info..."
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
-              />
-              <input
-                type="number"
-                value={newSubDuration}
-                onChange={(e) => setNewSubDuration(e.target.value)}
-                placeholder="Days..."
-                className="w-28 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
-              />
-              <input
-                type="number"
-                step="0.01"
-                value={newSubPrice}
-                onChange={(e) => setNewSubPrice(e.target.value)}
-                placeholder="Price..."
-                className="w-32 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
-              />
-              <button
+              <InputGroup className="flex-1">
+                <InputGroupInput
+                  type="text"
+                  value={newSubInfo}
+                  onChange={(e) => setNewSubInfo(e.target.value)}
+                  placeholder="Subscription info..."
+                />
+              </InputGroup>
+              <InputGroup className="w-28">
+                <InputGroupAddon>
+                  <Calendar className="size-4" />
+                </InputGroupAddon>
+                <InputGroupInput
+                  type="text"
+                  value={newSubDuration}
+                  onChange={(e) => setNewSubDuration(e.target.value)}
+                  placeholder="Days..."
+                />
+              </InputGroup>
+              <InputGroup className="w-32">
+                <InputGroupInput
+                  type="text"
+                  value={newSubPrice}
+                  onChange={(e) => setNewSubPrice(e.target.value)}
+                  placeholder="Price..."
+                />
+              </InputGroup>
+              <Button
                 onClick={addSubscription}
                 disabled={!newSubInfo.trim() || !newSubDuration || !newSubPrice}
-                className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 disabled:opacity-50"
+                className="bg-green-500 hover:bg-green-600"
               >
                 Add
-              </button>
+              </Button>
             </div>
           </div>
         )}

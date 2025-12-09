@@ -1,11 +1,33 @@
 import { auth } from '@clerk/nextjs/server'
 import { redirect } from 'next/navigation'
+import sql from '@/lib/db'
+import SetupPlayerForm from './SetupPlayerForm'
 
 export default async function SetupPlayer() {
   const { userId } = await auth()
   
   if (!userId) {
     redirect('/')
+  }
+  
+  const [user] = await sql`
+    SELECT * FROM users WHERE userid = ${userId}
+  `
+  
+  if (!user) {
+    redirect('/choose-account-type')
+  }
+  
+  if (user.role !== 'player') {
+    redirect('/dashboard')
+  }
+  
+  const [existingPlayer] = await sql`
+    SELECT * FROM player WHERE userid = ${userId}
+  `
+  
+  if (existingPlayer) {
+    redirect('/player-dashboard')
   }
   
   return (
@@ -15,8 +37,10 @@ export default async function SetupPlayer() {
           Set Up Your Player Profile
         </h1>
         <p className="text-gray-600 text-center mb-8">
-          Player setup page - coming soon
+          Please provide some basic information about yourself
         </p>
+        
+        <SetupPlayerForm userId={userId} />
       </div>
     </div>
   )
