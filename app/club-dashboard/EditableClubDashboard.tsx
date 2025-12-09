@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { Button } from '@/components/ui/button'
 
 
 // AI korišten za pomoć pri stvaranju editable dashboarda
@@ -151,28 +152,28 @@ export default function EditableClubDashboard({ club, workHours, content, clubPh
 
       <div className="flex justify-end mb-4">
         {!isEditing ? (
-          <button
+          <Button
             onClick={() => setIsEditing(true)}
-            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+            className="bg-green-600 hover:bg-green-700"
           >
             Edit Information
-          </button>
+          </Button>
         ) : (
           <div className="space-x-2">
-            <button
+            <Button
               onClick={handleCancel}
               disabled={isSaving}
-              className="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 disabled:opacity-50"
+              variant="secondary"
             >
               Cancel
-            </button>
-            <button
+            </Button>
+            <Button
               onClick={handleSave}
               disabled={isSaving}
-              className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50"
+              className="bg-green-600 hover:bg-green-700"
             >
               {isSaving ? 'Saving...' : 'Save Changes'}
-            </button>
+            </Button>
           </div>
         )}
       </div>
@@ -231,12 +232,13 @@ export default function EditableClubDashboard({ club, workHours, content, clubPh
                       onChange={(e) => updateWorkHour(wh.day_of_week, 'end_time', e.target.value)}
                       className="px-3 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-green-500"
                     />
-                    <button
+                    <Button
                       onClick={() => removeWorkHour(wh.day_of_week)}
-                      className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 text-sm"
+                      variant="destructive"
+                      size="sm"
                     >
                       Remove
-                    </button>
+                    </Button>
                   </div>
                 ) : (
                   <span className="text-gray-600">{formatTime(wh.start_time)} - {formatTime(wh.end_time)}</span>
@@ -253,13 +255,14 @@ export default function EditableClubDashboard({ club, workHours, content, clubPh
             <p className="text-sm font-medium text-gray-700 mb-2">Add Day:</p>
             <div className="flex flex-wrap gap-2">
               {getAvailableDays().map(day => (
-                <button
+                <Button
                   key={day.index}
                   onClick={() => addWorkHour(day.index)}
-                  className="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600 text-sm"
+                  size="sm"
+                  className="bg-green-500 hover:bg-green-600"
                 >
                   + {day.name}
-                </button>
+                </Button>
               ))}
             </div>
           </div>
@@ -315,12 +318,14 @@ export default function EditableClubDashboard({ club, workHours, content, clubPh
                   className="w-full h-full object-cover"
                 />
                 {isEditing && (
-                  <button
+                  <Button
                     onClick={() => removePhoto(index)}
-                    className="absolute top-2 right-2 bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 text-sm opacity-0 group-hover:opacity-100 transition-opacity"
+                    variant="destructive"
+                    size="sm"
+                    className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
                   >
                     Remove
-                  </button>
+                  </Button>
                 )}
               </div>
             ))}
@@ -347,6 +352,6 @@ export default function EditableClubDashboard({ club, workHours, content, clubPh
           </div>
         )}
       </div>
-    </>
+      </>
   )
 }

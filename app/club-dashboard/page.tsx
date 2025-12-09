@@ -1,6 +1,8 @@
 import { auth } from '@clerk/nextjs/server'
 import { redirect } from 'next/navigation'
 import sql from '@/lib/db'
+import Link from 'next/link'
+import { Button } from '@/components/ui/button'
 import Header from '../components/Header'
 import EditableClubDashboard from './EditableClubDashboard'
 
@@ -49,12 +51,11 @@ export default async function ClubDashboard() {
         <div className="max-w-4xl mx-auto">
           <div className="flex justify-between items-center mb-6">
             <h1 className="text-3xl font-bold">Club Dashboard</h1>
-            <a 
-              href="/club-services" 
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-            >
-              To Services
-            </a>
+            <Link href="/club-services">
+              <Button className="bg-blue-600 hover:bg-blue-700">
+                To Services
+              </Button>
+            </Link>
           </div>
           
           <EditableClubDashboard 
@@ -63,6 +64,14 @@ export default async function ClubDashboard() {
             content={content}
             clubPhotos={clubPhotos}
           />
+          
+          <div className="mt-8 flex justify-center">
+            <Link href="/court-management">
+              <Button className="bg-blue-600 hover:bg-blue-700 px-6 py-3 font-medium">
+                Manage Courts
+              </Button>
+            </Link>
+          </div>
         </div>
       </div>
     </>

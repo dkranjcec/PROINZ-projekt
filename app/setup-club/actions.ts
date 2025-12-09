@@ -8,8 +8,7 @@ export async function saveClubInfo(
   userId: string,
   clubName: string,
   clubAddress: string,
-  rules: string,
-  workHoursJson?: string
+  rules: string
 ) {
 
   const { userId: authUserId } = await auth()
@@ -41,19 +40,6 @@ export async function saveClubInfo(
       INSERT INTO club (userid, clubname, clubaddress, rules)
       VALUES (${userId}, ${clubName}, ${clubAddress}, ${rules})
     `
-    
-    if (workHoursJson) {
-      const workHours = JSON.parse(workHoursJson)
-      
-      if (Array.isArray(workHours)) {
-        for (const wh of workHours) {
-          await sql`
-            INSERT INTO workhours (userid, day_of_week, start_time, end_time)
-            VALUES (${userId}, ${wh.day_of_week}, ${wh.start_time}, ${wh.end_time})
-          `
-        }
-      }
-    }
   } catch (error) {
     console.error('Error saving club information:', error)
     throw new Error('Failed to save club information to database')

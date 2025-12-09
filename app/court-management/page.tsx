@@ -4,15 +4,13 @@ import sql from '@/lib/db'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import Header from '../components/Header'
-import EditableClubServices from './EditableClubServices'
 
-export default async function ClubServices() {
+export default async function CourtManagement() {
   const { userId } = await auth()
   
   if (!userId) {
     redirect('/')
   }
-  
   
   const [user] = await sql`
     SELECT * FROM users WHERE userid = ${userId}
@@ -22,10 +20,9 @@ export default async function ClubServices() {
     redirect('/choose-account-type')
   }
 
-  if (user.role === 'player') {
+  if (user.role !== 'club') {
     redirect('/dashboard')
   }
-
 
   const [club] = await sql`
     SELECT * FROM club WHERE userid = ${userId}
@@ -35,37 +32,23 @@ export default async function ClubServices() {
     redirect('/setup-club')
   }
 
-
-  const priceList = await sql`
-    SELECT * FROM pricelist WHERE userid = ${userId} ORDER BY productid DESC
-  `
-  const lessons = await sql`
-    SELECT * FROM lessons WHERE userid = ${userId} ORDER BY lessonid DESC
-  `
-  const subscriptions = await sql`
-    SELECT * FROM subscriptions WHERE userid = ${userId} ORDER BY subid DESC
-  `
-
   return (
     <>
       <Header />
       <div className="min-h-screen p-8">
         <div className="max-w-4xl mx-auto">
           <div className="flex justify-between items-center mb-6">
-            <h1 className="text-3xl font-bold">Club Services</h1>
+            <h1 className="text-3xl font-bold text-gray-800">Court Management</h1>
             <Link href="/club-dashboard">
-              <Button className="bg-blue-600 hover:bg-blue-700">
-                To Dashboard
+              <Button variant="secondary">
+                Back to Dashboard
               </Button>
             </Link>
           </div>
           
-          <EditableClubServices 
-            club={club}
-            priceList={priceList}
-            lessons={lessons}
-            subscriptions={subscriptions}
-          />
+          <div className="bg-white rounded-lg shadow p-6">
+            <p className="text-gray-600">Court management page - coming soon</p>
+          </div>
         </div>
       </div>
     </>
