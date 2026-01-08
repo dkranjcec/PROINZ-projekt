@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
+import AddressAutocomplete from '../components/AddressAutocomplete'
 
 
 // AI korišten za pomoć pri stvaranju editable dashboarda
@@ -19,6 +20,10 @@ export default function EditableClubDashboard({ club, workHours, content, clubPh
   const [isEditing, setIsEditing] = useState(false)
   const [clubName, setClubName] = useState(club.clubname)
   const [clubAddress, setClubAddress] = useState(club.clubaddress)
+  const [coordinates, setCoordinates] = useState<{ lat: number | null; lng: number | null }>({ 
+    lat: club.latitude, 
+    lng: club.longitude 
+  })
   const [clubRules, setClubRules] = useState(club.rules || '')
   const [editableWorkHours, setEditableWorkHours] = useState(workHours)
   const [editableContent, setEditableContent] = useState(content?.contenttext || '')
@@ -35,11 +40,18 @@ export default function EditableClubDashboard({ club, workHours, content, clubPh
 
   function updateWorkHour(dayOfWeek: number, field: 'start_time' | 'end_time', value: string) {
     setEditableWorkHours(prev => 
-      prev.map(wh => 
-        wh.day_of_week === dayOfWeek 
-          ? { ...wh, [field]: value }
-          : wh
-      )
+      prev.map(wh => {
+        if (wh.day_of_week === dayOfWeek) {
+          const updated = { ...wh, [field]: value }
+          // Validate that start_time is before end_time
+          if (updated.start_time && updated.end_time && updated.start_time >= updated.end_time) {
+            alert('Start time must be before end time')
+            return wh // Return unchanged if invalid
+          }
+          return updated
+        }
+        return wh
+      })
     )
   }
 
@@ -111,6 +123,8 @@ export default function EditableClubDashboard({ club, workHours, content, clubPh
         body: JSON.stringify({
           clubName,
           clubAddress,
+          latitude: coordinates.lat,
+          longitude: coordinates.lng,
           clubRules,
           workHours: editableWorkHours,
           content: editableContent,
@@ -134,6 +148,7 @@ export default function EditableClubDashboard({ club, workHours, content, clubPh
   function handleCancel() {
     setClubName(club.clubname)
     setClubAddress(club.clubaddress)
+    setCoordinates({ lat: club.latitude, lng: club.longitude })
     setClubRules(club.rules || '')
     setEditableWorkHours(workHours)
     setEditableContent(content?.contenttext || '')
@@ -184,11 +199,14 @@ export default function EditableClubDashboard({ club, workHours, content, clubPh
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Club Name</label>
             {isEditing ? (
-              <input
-                type="text"
-                value={clubName}
-                onChange={(e) => setClubName(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+              <AddressAutocomplete
+                value={clubAddress}
+                onChange={(address, lat, lng) => {
+                  setClubAddress(address)
+                  setCoordinates({ lat, lng })
+                }}
+                required
+                placeholder="Start typing address..."
               />
             ) : (
               <p className="text-gray-900">{clubName}</p>
@@ -197,11 +215,14 @@ export default function EditableClubDashboard({ club, workHours, content, clubPh
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Address</label>
             {isEditing ? (
-              <input
-                type="text"
+              <AddressAutocomplete
                 value={clubAddress}
-                onChange={(e) => setClubAddress(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                onChange={(address, lat, lng) => {
+                  setClubAddress(address)
+                  setCoordinates({ lat, lng })
+                }}
+                required
+                placeholder="Start typing address..."
               />
             ) : (
               <p className="text-gray-900">{clubAddress}</p>

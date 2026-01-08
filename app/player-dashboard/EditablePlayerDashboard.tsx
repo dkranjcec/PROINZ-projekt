@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import {
   Select,
@@ -202,6 +203,16 @@ export default function EditablePlayerDashboard({ player }: EditablePlayerDashbo
           <p className="text-gray-900 capitalize">{skillLevel || 'Not set'}</p>
         )}
       </div>
+
+      {!isEditing && (
+        <div className="mt-6 pt-6 border-t border-gray-200">
+          <Link href="/browse-clubs">
+            <Button className="w-full bg-green-600 hover:bg-green-700">
+              Browse Clubs
+            </Button>
+          </Link>
+        </div>
+      )}
     </>
   )
 }

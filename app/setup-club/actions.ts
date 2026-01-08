@@ -8,7 +8,9 @@ export async function saveClubInfo(
   userId: string,
   clubName: string,
   clubAddress: string,
-  rules: string
+  rules: string,
+  latitude: number | null = null,
+  longitude: number | null = null
 ) {
 
   const { userId: authUserId } = await auth()
@@ -37,8 +39,8 @@ export async function saveClubInfo(
   
   try {
     await sql`
-      INSERT INTO club (userid, clubname, clubaddress, rules)
-      VALUES (${userId}, ${clubName}, ${clubAddress}, ${rules})
+      INSERT INTO club (userid, clubname, clubaddress, rules, latitude, longitude)
+      VALUES (${userId}, ${clubName}, ${clubAddress}, ${rules}, ${latitude}, ${longitude})
     `
   } catch (error) {
     console.error('Error saving club information:', error)

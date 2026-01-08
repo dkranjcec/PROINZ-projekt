@@ -65,10 +65,15 @@ export default async function ClubDashboard() {
             clubPhotos={clubPhotos}
           />
           
-          <div className="mt-8 flex justify-center">
+          <div className="mt-8 flex justify-center gap-4">
             <Link href="/court-management">
               <Button className="bg-blue-600 hover:bg-blue-700 px-6 py-3 font-medium">
                 Manage Courts
+              </Button>
+            </Link>
+            <Link href="/court-bookings">
+              <Button className="bg-green-600 hover:bg-green-700 px-6 py-3 font-medium">
+                Manage Bookings
               </Button>
             </Link>
           </div>

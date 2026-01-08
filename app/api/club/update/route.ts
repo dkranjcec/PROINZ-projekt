@@ -10,11 +10,15 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { clubName, clubAddress, clubRules, workHours, content, photos } = await request.json()
+    const { clubName, clubAddress, latitude, longitude, clubRules, workHours, content, photos } = await request.json()
 
     await sql`
       UPDATE club 
-      SET clubname = ${clubName}, clubaddress = ${clubAddress}, rules = ${clubRules}
+      SET clubname = ${clubName}, 
+          clubaddress = ${clubAddress}, 
+          latitude = ${latitude},
+          longitude = ${longitude},
+          rules = ${clubRules}
       WHERE userid = ${userId}
     `
 
