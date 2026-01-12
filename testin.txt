@@ -1,0 +1,6 @@
+1. Testiramo browser, searchamo tenis ako i trazi da nade dva od tri kluba.
+2. 
+3. Testira da se dobro upisuje, upise provjeri jel 3 puta upisano u db
+4. Pousa upisat duplikati ocekuje error
+5. Znaic ulogrian je kao user 999 a pokusava pormjenit podatke u user456, treba bacit error.
+6. Testira booking koji se preklapa. Napravi jedan booking, onda drugi booking pokusa napravit koji overlapa i onda gledamo jel nam da error. 
