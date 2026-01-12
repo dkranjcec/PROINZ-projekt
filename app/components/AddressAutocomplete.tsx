@@ -1,7 +1,7 @@
 'use client'
 
 import { useLoadScript } from '@react-google-maps/api'
-import { useState, useRef, useEffect } from 'react'
+import { useRef, useEffect } from 'react'
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group'
 import { MapPin } from 'lucide-react'
 
@@ -30,23 +30,23 @@ export default function AddressAutocomplete({
 
   useEffect(() => {
     if (isLoaded && inputRef.current && !autocompleteRef.current) {
+      // Disable the default autocomplete attribute that might interfere
+      inputRef.current.setAttribute('autocomplete', 'off')
+      
       autocompleteRef.current = new google.maps.places.Autocomplete(inputRef.current, {
         types: ['address'],
         fields: ['formatted_address', 'geometry'],
       })
 
-      const listener = autocompleteRef.current.addListener('place_changed', () => {
+      autocompleteRef.current.addListener('place_changed', () => {
         const place = autocompleteRef.current?.getPlace()
-        if (place?.formatted_address) {
-          const lat = place.geometry?.location?.lat() || null
-          const lng = place.geometry?.location?.lng() || null
+        if (place?.formatted_address && place?.geometry?.location) {
+          const lat = place.geometry.location.lat()
+          const lng = place.geometry.location.lng()
+          // Call onChange which will update parent state and re-render with new value
           onChange(place.formatted_address, lat, lng)
         }
       })
-
-      return () => {
-        google.maps.event.removeListener(listener)
-      }
     }
   }, [isLoaded, onChange])
 
@@ -66,6 +66,7 @@ export default function AddressAutocomplete({
         </InputGroupAddon>
         <InputGroupInput
           type="text"
+          value=""
           placeholder="Loading..."
           disabled
         />
@@ -83,8 +84,15 @@ export default function AddressAutocomplete({
         type="text"
         value={value}
         onChange={(e) => onChange(e.target.value, null, null)}
+        onKeyDown={(e) => {
+          // Prevent form submission on Enter when selecting from autocomplete
+          if (e.key === 'Enter') {
+            e.preventDefault()
+          }
+        }}
         required={required}
         placeholder={placeholder}
+        autoComplete="off"
       />
     </InputGroup>
   )

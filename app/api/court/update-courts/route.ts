@@ -19,6 +19,7 @@ export async function POST(request: Request) {
     // Delete all photos first, then courts (to avoid foreign key issues)
     const existingCourts = await sql`SELECT terenid FROM teren WHERE userid = ${userId}`
     if (existingCourts.length > 0) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const courtIds = existingCourts.map((c: any) => c.terenid)
       await sql`DELETE FROM terenphoto WHERE terenid = ANY(${courtIds})`
     }

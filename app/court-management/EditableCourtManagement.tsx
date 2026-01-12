@@ -46,7 +46,7 @@ export default function EditableCourtManagement({ courts }: EditableCourtManagem
     setEditableCourts(prev => prev.filter((_, i) => i !== index))
   }
 
-  function updateCourt(index: number, field: keyof Court, value: any) {
+  function updateCourt(index: number, field: keyof Court, value: string | number | null) {
     setEditableCourts(prev => {
       const updated = [...prev]
       updated[index] = { ...updated[index], [field]: value }

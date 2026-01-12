@@ -158,7 +158,7 @@ export default function CourtBookingsManagement({ courts, bookings }: CourtBooki
 
           <div className="flex-1">
             <label className="block text-sm font-medium text-gray-700 mb-2">Filter by Status</label>
-            <Select value={filter} onValueChange={(v) => setFilter(v as any)}>
+            <Select value={filter} onValueChange={(v) => setFilter(v as 'all' | 'pending' | 'confirmed')}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
@@ -175,7 +175,7 @@ export default function CourtBookingsManagement({ courts, bookings }: CourtBooki
           {filteredBookings.length === 0 ? (
             <p className="text-center text-gray-500 py-8">No bookings found</p>
           ) : (
-            filteredBookings.map((booking, idx) => (
+            filteredBookings.map((booking) => (
               <div 
                 key={`${booking.terenid}-${booking.playerid}-${booking.starttime}`}
                 className={`border rounded-lg p-4 ${

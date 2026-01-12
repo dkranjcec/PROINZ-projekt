@@ -39,12 +39,12 @@ export async function uploadToS3(
   try {
     await s3Client.send(command)
     console.log(`Successfully uploaded with ACL: ${key}`)
-  } catch (error: any) {
+  } catch (error: unknown) {
     // If ACL fails, try without ACL (bucket might have ACL disabled)
-    if (error.name === 'AccessControlListNotSupported' || 
-        error.code === 'AccessControlListNotSupported' ||
-        error.name === 'InvalidArgument' ||
-        error.message?.includes('ACL')) {
+    if ((error as { name?: string }).name === 'AccessControlListNotSupported' || 
+        (error as { code?: string }).code === 'AccessControlListNotSupported' ||
+        (error as { name?: string }).name === 'InvalidArgument' ||
+        (error as { message?: string }).message?.includes('ACL')) {
       console.log(`ACL not supported, uploading without ACL: ${key}`)
       command = new PutObjectCommand({
         Bucket: BUCKET_NAME,

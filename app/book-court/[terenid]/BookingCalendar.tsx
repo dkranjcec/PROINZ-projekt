@@ -4,7 +4,6 @@ import { useState, useRef } from 'react'
 import FullCalendar from '@fullcalendar/react'
 import timeGridPlugin from '@fullcalendar/timegrid'
 import interactionPlugin from '@fullcalendar/interaction'
-import { Button } from '@/components/ui/button'
 
 interface Booking {
   terenid: number
@@ -24,8 +23,8 @@ interface BookingCalendarProps {
 }
 
 export default function BookingCalendar({ courtId, courtName, clubId, bookings, playerUserId }: BookingCalendarProps) {
-  const calendarRef = useRef<any>(null)
-  const [events, setEvents] = useState(
+  const calendarRef = useRef<FullCalendar>(null)
+  const [events] = useState(
     bookings.map(booking => {
       const isOwn = booking.playerid === playerUserId
       const isConfirmed = booking.confirmed
@@ -55,14 +54,11 @@ export default function BookingCalendar({ courtId, courtName, clubId, bookings, 
       }
     })
   )
-  const [isBooking, setIsBooking] = useState(false)
-
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async function handleDateSelect(selectInfo: any) {
     const title = `Book ${courtName}?`
     
     if (confirm(title)) {
-      setIsBooking(true)
-      
       try {
         const response = await fetch('/api/booking/create', {
           method: 'POST',
@@ -80,8 +76,6 @@ export default function BookingCalendar({ courtId, courtName, clubId, bookings, 
           alert(error.error || 'Failed to create booking')
           return
         }
-
-        const data = await response.json()
         
         // Add event to calendar (pending confirmation)
         const calendarApi = selectInfo.view.calendar
@@ -103,14 +97,12 @@ export default function BookingCalendar({ courtId, courtName, clubId, bookings, 
       } catch (error) {
         console.error('Error creating booking:', error)
         alert('Failed to create booking')
-      } finally {
-        setIsBooking(false)
       }
     }
     
     selectInfo.view.calendar.unselect()
   }
-
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async function handleEventClick(clickInfo: any) {
     const event = clickInfo.event
     

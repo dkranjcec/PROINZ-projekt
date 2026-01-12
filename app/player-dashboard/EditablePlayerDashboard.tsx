@@ -12,16 +12,24 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 
+interface Player {
+  firstname: string
+  lastname: string
+  phone_number: string
+  preferred_time_start: string
+  preferred_time_end: string
+  skill_level: string
+}
 
 interface EditablePlayerDashboardProps {
-  player: any
+  player: Player
 }
 
 export default function EditablePlayerDashboard({ player }: EditablePlayerDashboardProps) {
   const router = useRouter()
   const [isEditing, setIsEditing] = useState(false)
-  const [firstName, setFirstName] = useState(player.firstname)
-  const [lastName, setLastName] = useState(player.lastname)
+  const [firstName, setFirstName] = useState(player.firstname || '')
+  const [lastName, setLastName] = useState(player.lastname || '')
   const [phoneNumber, setPhoneNumber] = useState(player.phone_number || '')
   const [preferredTimeStart, setPreferredTimeStart] = useState(player.preferred_time_start || '')
   const [preferredTimeEnd, setPreferredTimeEnd] = useState(player.preferred_time_end || '')

@@ -61,10 +61,10 @@ export default async function ClubServices() {
           </div>
           
           <EditableClubServices 
-            club={club}
-            priceList={priceList}
-            lessons={lessons}
-            subscriptions={subscriptions}
+            club={club as any}
+            priceList={priceList as any}
+            lessons={lessons as any}
+            subscriptions={subscriptions as any}
           />
         </div>
       </div>

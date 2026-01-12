@@ -2,6 +2,9 @@ import { auth } from '@clerk/nextjs/server'
 import { redirect } from 'next/navigation'
 import sql from '@/lib/db'
 
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
 export default async function CreateAccount({
   searchParams,
 }: {
@@ -39,7 +42,7 @@ export default async function CreateAccount({
       INSERT INTO users (userid, role)
       VALUES (${userId}, ${accountType})
     `
-  } catch (error) {
+  } catch {
     console.log('User may already exist, continuing...')
   }
   

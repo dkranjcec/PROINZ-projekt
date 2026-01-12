@@ -46,6 +46,7 @@ export default async function CourtManagement() {
       `
       return {
         ...court,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         photos: photos.map((p: any) => p.photolink)
       }
     })
@@ -65,7 +66,7 @@ export default async function CourtManagement() {
             </Link>
           </div>
           
-          <EditableCourtManagement courts={courtsWithPhotos} />
+          <EditableCourtManagement courts={courtsWithPhotos as any} />
         </div>
       </div>
     </>

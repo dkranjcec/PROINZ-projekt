@@ -8,18 +8,41 @@ import AddressAutocomplete from '../components/AddressAutocomplete'
 
 // AI korišten za pomoć pri stvaranju editable dashboarda
 
+interface Club {
+  userid: string
+  clubname: string
+  clubaddress: string
+  latitude: number | null
+  longitude: number | null
+  rules: string
+}
+
+interface WorkHour {
+  day_of_week: number
+  start_time: string
+  end_time: string
+}
+
+interface Content {
+  contenttext: string
+}
+
+interface ClubPhoto {
+  photolink: string
+}
+
 interface EditableClubDashboardProps {
-  club: any
-  workHours: any[]
-  content: any
-  clubPhotos: any[]
+  club: Club
+  workHours: WorkHour[]
+  content: Content
+  clubPhotos: ClubPhoto[]
 }
 
 export default function EditableClubDashboard({ club, workHours, content, clubPhotos }: EditableClubDashboardProps) {
   const router = useRouter()
   const [isEditing, setIsEditing] = useState(false)
-  const [clubName, setClubName] = useState(club.clubname)
-  const [clubAddress, setClubAddress] = useState(club.clubaddress)
+  const [clubName, setClubName] = useState(club.clubname || '')
+  const [clubAddress, setClubAddress] = useState(club.clubaddress || '')
   const [coordinates, setCoordinates] = useState<{ lat: number | null; lng: number | null }>({ 
     lat: club.latitude, 
     lng: club.longitude 
@@ -40,7 +63,8 @@ export default function EditableClubDashboard({ club, workHours, content, clubPh
 
   function updateWorkHour(dayOfWeek: number, field: 'start_time' | 'end_time', value: string) {
     setEditableWorkHours(prev => 
-      prev.map(wh => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      prev.map((wh: any) => {
         if (wh.day_of_week === dayOfWeek) {
           const updated = { ...wh, [field]: value }
           // Validate that start_time is before end_time
@@ -199,14 +223,12 @@ export default function EditableClubDashboard({ club, workHours, content, clubPh
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Club Name</label>
             {isEditing ? (
-              <AddressAutocomplete
-                value={clubAddress}
-                onChange={(address, lat, lng) => {
-                  setClubAddress(address)
-                  setCoordinates({ lat, lng })
-                }}
+              <input
+                type="text"
+                value={clubName}
+                onChange={(e) => setClubName(e.target.value)}
                 required
-                placeholder="Start typing address..."
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 text-gray-700"
               />
             ) : (
               <p className="text-gray-900">{clubName}</p>
@@ -235,21 +257,21 @@ export default function EditableClubDashboard({ club, workHours, content, clubPh
         <h2 className="text-xl font-semibold mb-4">Work Hours</h2>
         {editableWorkHours && editableWorkHours.length > 0 ? (
           <div className="space-y-3">
-            {editableWorkHours.map((wh: any) => (
+            {editableWorkHours.map((wh) => (
               <div key={wh.day_of_week} className="flex justify-between items-center py-2 border-b border-gray-100 last:border-0">
                 <span className="font-medium text-gray-700 w-32">{dayNames[wh.day_of_week - 1]}</span>
                 {isEditing ? (
                   <div className="flex gap-2 items-center">
                     <input
                       type="time"
-                      value={wh.start_time}
+                      value={wh.start_time || ''}
                       onChange={(e) => updateWorkHour(wh.day_of_week, 'start_time', e.target.value)}
                       className="px-3 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-green-500"
                     />
                     <span className="text-gray-500">-</span>
                     <input
                       type="time"
-                      value={wh.end_time}
+                      value={wh.end_time || ''}
                       onChange={(e) => updateWorkHour(wh.day_of_week, 'end_time', e.target.value)}
                       className="px-3 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-green-500"
                     />
@@ -331,7 +353,7 @@ export default function EditableClubDashboard({ club, workHours, content, clubPh
         <h2 className="text-xl font-semibold mb-4">Club Photos</h2>
         {editablePhotos && editablePhotos.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {editablePhotos.map((photo: any, index: number) => (
+            {editablePhotos.map((photo, index: number) => (
               <div key={index} className="relative aspect-video rounded-lg overflow-hidden border border-gray-200 group">
                 <img
                   src={photo.photolink}

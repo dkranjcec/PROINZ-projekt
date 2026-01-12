@@ -64,6 +64,7 @@ export default async function ClubPage({ params }: PageProps) {
       `
       return {
         ...court,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         photos: photos.map((p: any) => p.photolink)
       }
     })
@@ -107,6 +108,7 @@ export default async function ClubPage({ params }: PageProps) {
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
               <h2 className="text-xl font-semibold mb-4">Photos</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                 {clubPhotos.map((photo: any, index: number) => (
                   <div key={index} className="relative aspect-video rounded-lg overflow-hidden border border-gray-200">
                     <img
@@ -136,6 +138,7 @@ export default async function ClubPage({ params }: PageProps) {
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
               <h2 className="text-xl font-semibold mb-4">Work Hours</h2>
               <div className="space-y-2">
+                {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                 {workHours.map((wh: any) => (
                   <div key={wh.day_of_week} className="flex justify-between items-center py-2 border-b border-gray-100 last:border-0">
                     <span className="font-medium text-gray-700">{dayNames[wh.day_of_week]}</span>
@@ -167,6 +170,7 @@ export default async function ClubPage({ params }: PageProps) {
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
               <h2 className="text-xl font-semibold mb-4">Courts</h2>
               <div className="space-y-6">
+                {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                 {courtsWithPhotos.map((court: any) => (
                   <div key={court.terenid} className="border border-gray-200 rounded-lg p-4">
                     <div className="flex justify-between items-start mb-3">
@@ -235,6 +239,7 @@ export default async function ClubPage({ params }: PageProps) {
                 <div className="mb-6">
                   <h3 className="text-lg font-semibold mb-3">Price List</h3>
                   <div className="space-y-2">
+                    {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                     {priceList.map((item: any) => (
                       <div key={item.productid} className="flex justify-between items-center p-3 border border-gray-200 rounded-lg bg-gray-50">
                         <span className="font-medium text-gray-900">{item.productname}</span>
@@ -249,6 +254,7 @@ export default async function ClubPage({ params }: PageProps) {
                 <div className="mb-6">
                   <h3 className="text-lg font-semibold mb-3">Lessons</h3>
                   <div className="space-y-2">
+                    {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                     {lessons.map((item: any) => (
                       <div key={item.lessonid} className="flex justify-between items-center p-3 border border-gray-200 rounded-lg bg-gray-50">
                         <span className="font-medium text-gray-900">{item.lessoninfo}</span>
@@ -263,6 +269,7 @@ export default async function ClubPage({ params }: PageProps) {
                 <div>
                   <h3 className="text-lg font-semibold mb-3">Subscriptions</h3>
                   <div className="space-y-2">
+                    {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                     {subscriptions.map((item: any) => (
                       <div key={item.subid} className="flex justify-between items-center p-3 border border-gray-200 rounded-lg bg-gray-50">
                         <span className="font-medium text-gray-900">{item.subinfo}</span>

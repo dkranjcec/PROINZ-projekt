@@ -40,7 +40,7 @@ export default async function PlayerDashboard() {
             <h1 className="text-3xl font-bold text-gray-800">Player Dashboard</h1>
           </div>
           
-          <EditablePlayerDashboard player={player} />
+          <EditablePlayerDashboard player={player as any} />
         </div>
       </div>
     </>

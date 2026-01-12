@@ -6,11 +6,35 @@ import { Button } from '@/components/ui/button'
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group'
 import { BookOpen, Calendar } from 'lucide-react'
 
+interface Club {
+  userid: string
+  clubname: string
+}
+
+interface PriceItem {
+  productid: number
+  productname: string
+  price: number
+}
+
+interface Lesson {
+  lessonid: number
+  lessoninfo: string
+  price: number
+}
+
+interface Subscription {
+  subscriptionid: number
+  subinfo: string
+  duration: number
+  price: number
+}
+
 interface EditableClubServicesProps {
-  club: any
-  priceList: any[]
-  lessons: any[]
-  subscriptions: any[]
+  club: Club
+  priceList: PriceItem[]
+  lessons: Lesson[]
+  subscriptions: Subscription[]
 }
 
 export default function EditableClubServices({ club, priceList, lessons, subscriptions }: EditableClubServicesProps) {
@@ -74,7 +98,7 @@ export default function EditableClubServices({ club, priceList, lessons, subscri
         duration: parseInt(newSubDuration),
         price: parseFloat(newSubPrice.replace(',', '.')),
         userid: club.userid,
-        subid: Date.now()
+        subscriptionid: Date.now()
       }, ...prev])
       setNewSubInfo('')
       setNewSubDuration('')
@@ -170,7 +194,7 @@ export default function EditableClubServices({ club, priceList, lessons, subscri
         <h2 className="text-xl font-semibold mb-4">Price List</h2>
         {editablePriceList && editablePriceList.length > 0 ? (
           <div className="space-y-2 mb-4">
-            {editablePriceList.map((item: any, index: number) => (
+            {editablePriceList.map((item, index: number) => (
               <div key={index} className="flex gap-2 items-center">
                 {isEditing ? (
                   <>
@@ -192,7 +216,7 @@ export default function EditableClubServices({ club, priceList, lessons, subscri
                         value={item.price}
                         onChange={(e) => {
                           const updated = [...editablePriceList]
-                          updated[index].price = e.target.value
+                          updated[index].price = e.target.value as any
                           setEditablePriceList(updated)
                         }}
                         onBlur={(e) => {
@@ -260,7 +284,7 @@ export default function EditableClubServices({ club, priceList, lessons, subscri
         <h2 className="text-xl font-semibold mb-4">Lessons</h2>
         {editableLessons && editableLessons.length > 0 ? (
           <div className="space-y-2 mb-4">
-            {editableLessons.map((item: any, index: number) => (
+            {editableLessons.map((item, index: number) => (
               <div key={index} className="flex gap-2 items-center">
                 {isEditing ? (
                   <>
@@ -285,7 +309,7 @@ export default function EditableClubServices({ club, priceList, lessons, subscri
                         value={item.price}
                         onChange={(e) => {
                           const updated = [...editableLessons]
-                          updated[index].price = e.target.value
+                          updated[index].price = e.target.value as any
                           setEditableLessons(updated)
                         }}
                         onBlur={(e) => {
@@ -356,7 +380,7 @@ export default function EditableClubServices({ club, priceList, lessons, subscri
         <h2 className="text-xl font-semibold mb-4">Subscriptions</h2>
         {editableSubscriptions && editableSubscriptions.length > 0 ? (
           <div className="space-y-2 mb-4">
-            {editableSubscriptions.map((item: any, index: number) => (
+            {editableSubscriptions.map((item, index: number) => (
               <div key={index} className="flex gap-2 items-center">
                 {isEditing ? (
                   <>
@@ -381,7 +405,7 @@ export default function EditableClubServices({ club, priceList, lessons, subscri
                         value={item.duration}
                         onChange={(e) => {
                           const updated = [...editableSubscriptions]
-                          updated[index].duration = e.target.value
+                          updated[index].duration = e.target.value as any
                           setEditableSubscriptions(updated)
                         }}
                         onBlur={(e) => {
@@ -398,7 +422,7 @@ export default function EditableClubServices({ club, priceList, lessons, subscri
                         value={item.price}
                         onChange={(e) => {
                           const updated = [...editableSubscriptions]
-                          updated[index].price = e.target.value
+                          updated[index].price = e.target.value as any
                           setEditableSubscriptions(updated)
                         }}
                         onBlur={(e) => {

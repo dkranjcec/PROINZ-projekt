@@ -3,6 +3,9 @@ import { redirect } from 'next/navigation'
 import sql from '@/lib/db'
 import Header from './components/Header'
 
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
 export default async function Home() {
   const { userId } = await auth()
   

@@ -44,7 +44,8 @@ export default async function BrowseClubs() {
             </Link>
           </div>
 
-          <BrowseClubsList clubs={clubs} />
+          {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+          <BrowseClubsList clubs={clubs as any} />
         </div>
       </div>
     </>
