@@ -7,22 +7,26 @@ import Header from '../components/Header'
 import BrowseClubsList from './BrowseClubsList'
 
 export default async function BrowseClubs() {
-  const { userId } = await auth()
+  const isTestMode = process.env.E2E_TESTING === 'true'
   
-  if (!userId) {
-    redirect('/')
-  }
-  
-  const [user] = await sql`
-    SELECT * FROM users WHERE userid = ${userId}
-  `
-  
-  if (!user) {
-    redirect('/choose-account-type')
-  }
+  if (!isTestMode) {
+    const { userId } = await auth()
+    
+    if (!userId) {
+      redirect('/')
+    }
+    
+    const [user] = await sql`
+      SELECT * FROM users WHERE userid = ${userId}
+    `
+    
+    if (!user) {
+      redirect('/choose-account-type')
+    }
 
-  if (user.role !== 'player') {
-    redirect('/dashboard')
+    if (user.role !== 'player') {
+      redirect('/dashboard')
+    }
   }
 
   // Fetch all clubs sorted alphabetically

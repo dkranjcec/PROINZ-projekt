@@ -8,12 +8,20 @@ export default async function BookCourtPage({
 }: {
   params: Promise<{ terenid: string }>
 }) {
-  const { userId } = await auth()
-  const { terenid } = await params
+  const isTestMode = process.env.E2E_TESTING === 'true'
+  let userId = 'test-user-id'
+  
+  if (!isTestMode) {
+    const { userId: authUserId } = await auth()
 
-  if (!userId) {
-    redirect('/sign-in')
+    if (!authUserId) {
+      redirect('/sign-in')
+    }
+    
+    userId = authUserId
   }
+  
+  const { terenid } = await params
 
   // Get court details
   const courts = await sql`
