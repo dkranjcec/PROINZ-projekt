@@ -1,7 +1,7 @@
 'use client'
 
-import { useLoadScript, Autocomplete } from '@react-google-maps/api'
-import { useState, useRef } from 'react'
+import { useLoadScript } from '@react-google-maps/api'
+import { useState, useRef, useEffect } from 'react'
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group'
 import { MapPin } from 'lucide-react'
 
@@ -25,29 +25,35 @@ export default function AddressAutocomplete({
     libraries,
   })
 
-  const [autocomplete, setAutocomplete] = useState<google.maps.places.Autocomplete | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
+  const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null)
 
-  const onLoad = (autocompleteInstance: google.maps.places.Autocomplete) => {
-    setAutocomplete(autocompleteInstance)
-  }
+  useEffect(() => {
+    if (isLoaded && inputRef.current && !autocompleteRef.current) {
+      autocompleteRef.current = new google.maps.places.Autocomplete(inputRef.current, {
+        types: ['address'],
+        fields: ['formatted_address', 'geometry'],
+      })
 
-  const onPlaceChanged = () => {
-    if (autocomplete) {
-      const place = autocomplete.getPlace()
-      
-      if (place.formatted_address) {
-        const lat = place.geometry?.location?.lat() || null
-        const lng = place.geometry?.location?.lng() || null
-        onChange(place.formatted_address, lat, lng)
+      const listener = autocompleteRef.current.addListener('place_changed', () => {
+        const place = autocompleteRef.current?.getPlace()
+        if (place?.formatted_address) {
+          const lat = place.geometry?.location?.lat() || null
+          const lng = place.geometry?.location?.lng() || null
+          onChange(place.formatted_address, lat, lng)
+        }
+      })
+
+      return () => {
+        google.maps.event.removeListener(listener)
       }
     }
-  }
+  }, [isLoaded, onChange])
 
   if (loadError) {
     return (
       <div className="text-red-600 text-sm">
-        Error loading Google Maps. Please check your API key.
+        Error loading Google Maps.
       </div>
     )
   }
@@ -68,27 +74,18 @@ export default function AddressAutocomplete({
   }
 
   return (
-    <Autocomplete
-      onLoad={onLoad}
-      onPlaceChanged={onPlaceChanged}
-      options={{
-        types: ['address'],
-        fields: ['formatted_address', 'geometry'],
-      }}
-    >
-      <InputGroup>
-        <InputGroupAddon>
-          <MapPin className="size-4" />
-        </InputGroupAddon>
-        <InputGroupInput
-          ref={inputRef}
-          type="text"
-          value={value}
-          onChange={(e) => onChange(e.target.value, null, null)}
-          required={required}
-          placeholder={placeholder}
-        />
-      </InputGroup>
-    </Autocomplete>
+    <InputGroup>
+      <InputGroupAddon>
+        <MapPin className="size-4" />
+      </InputGroupAddon>
+      <InputGroupInput
+        ref={inputRef}
+        type="text"
+        value={value}
+        onChange={(e) => onChange(e.target.value, null, null)}
+        required={required}
+        placeholder={placeholder}
+      />
+    </InputGroup>
   )
 }
