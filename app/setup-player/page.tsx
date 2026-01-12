@@ -4,30 +4,37 @@ import sql from '@/lib/db'
 import SetupPlayerForm from './SetupPlayerForm'
 
 export default async function SetupPlayer() {
-  const { userId } = await auth()
+  const isTestMode = process.env.E2E_TESTING === 'true'
+  let userId = 'test-user-id'
   
-  if (!userId) {
-    redirect('/')
-  }
-  
-  const [user] = await sql`
-    SELECT * FROM users WHERE userid = ${userId}
-  `
-  
-  if (!user) {
-    redirect('/choose-account-type')
-  }
-  
-  if (user.role !== 'player') {
-    redirect('/dashboard')
-  }
-  
-  const [existingPlayer] = await sql`
-    SELECT * FROM player WHERE userid = ${userId}
-  `
-  
-  if (existingPlayer) {
-    redirect('/player-dashboard')
+  if (!isTestMode) {
+    const { userId: authUserId } = await auth()
+    
+    if (!authUserId) {
+      redirect('/')
+    }
+    
+    userId = authUserId
+    
+    const [user] = await sql`
+      SELECT * FROM users WHERE userid = ${userId}
+    `
+    
+    if (!user) {
+      redirect('/choose-account-type')
+    }
+    
+    if (user.role !== 'player') {
+      redirect('/dashboard')
+    }
+    
+    const [existingPlayer] = await sql`
+      SELECT * FROM player WHERE userid = ${userId}
+    `
+    
+    if (existingPlayer) {
+      redirect('/player-dashboard')
+    }
   }
   
   return (

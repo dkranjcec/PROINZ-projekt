@@ -5,12 +5,7 @@ import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Search } from 'lucide-react'
-
-interface Club {
-  userid: string
-  clubname: string
-  clubaddress: string
-}
+import { filterClubs, type Club } from '@/lib/club-utils'
 
 interface BrowseClubsListProps {
   clubs: Club[]
@@ -19,10 +14,7 @@ interface BrowseClubsListProps {
 export default function BrowseClubsList({ clubs }: BrowseClubsListProps) {
   const [searchQuery, setSearchQuery] = useState('')
 
-  const filteredClubs = clubs.filter(club =>
-    club.clubname.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    club.clubaddress.toLowerCase().includes(searchQuery.toLowerCase())
-  )
+  const filteredClubs = filterClubs(clubs, searchQuery)
 
   return (
     <>

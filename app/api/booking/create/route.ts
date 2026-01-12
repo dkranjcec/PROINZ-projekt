@@ -1,6 +1,7 @@
 import { auth } from '@clerk/nextjs/server'
 import sql from '@/lib/db'
 import { NextResponse } from 'next/server'
+import { validateBookingFields, hasAnyOverlap } from '@/lib/booking-utils'
 
 export async function POST(request: Request) {
   try {
@@ -13,22 +14,17 @@ export async function POST(request: Request) {
     const body = await request.json()
     const { terenid, clubid, starttime, endtime } = body
 
-    if (!terenid || !clubid || !starttime || !endtime) {
-      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
+    const validation = validateBookingFields(body)
+    if (!validation.valid) {
+      return NextResponse.json({ error: validation.error }, { status: 400 })
     }
 
-    // Check if the time slot is already booked
     const existingBookings = await sql`
-      SELECT * FROM termin 
+      SELECT starttime, endtime FROM termin 
       WHERE terenid = ${terenid}
-      AND (
-        (starttime <= ${starttime} AND endtime > ${starttime})
-        OR (starttime < ${endtime} AND endtime >= ${endtime})
-        OR (starttime >= ${starttime} AND endtime <= ${endtime})
-      )
     `
 
-    if (existingBookings.length > 0) {
+    if (hasAnyOverlap(existingBookings, { starttime, endtime })) {
       return NextResponse.json({ error: 'This time slot is already booked' }, { status: 409 })
     }
 
