@@ -24,7 +24,8 @@ export async function POST(request: Request) {
       WHERE terenid = ${terenid}
     `
 
-    if (hasAnyOverlap(existingBookings, { starttime, endtime })) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    if (hasAnyOverlap(existingBookings as any, { starttime, endtime })) {
       return NextResponse.json({ error: 'This time slot is already booked' }, { status: 409 })
     }
 
