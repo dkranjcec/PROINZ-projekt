@@ -6,6 +6,9 @@ import { Button } from '@/components/ui/button'
 import Header from '../components/Header'
 import EditableCourtManagement from './EditableCourtManagement'
 
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
 export default async function CourtManagement() {
   const { userId } = await auth()
   

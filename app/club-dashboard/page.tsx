@@ -6,6 +6,9 @@ import { Button } from '@/components/ui/button'
 import Header from '../components/Header'
 import EditableClubDashboard from './EditableClubDashboard'
 
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
 export default async function ClubDashboard() {
   const { userId } = await auth()
   

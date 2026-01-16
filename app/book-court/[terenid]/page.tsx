@@ -3,6 +3,9 @@ import { redirect } from 'next/navigation'
 import sql from '@/lib/db'
 import BookingCalendar from './BookingCalendar'
 
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
 export default async function BookCourtPage({
   params,
 }: {
@@ -61,6 +64,7 @@ export default async function BookCourtPage({
             <span>Type: {court.type}</span>
             <span>Size: {court.size}</span>
             <span>Ground: {court.ground}</span>
+            {court.price && <span className="font-semibold text-green-600">Price: €{court.price}/hour</span>}
           </div>
         </div>
         
@@ -70,6 +74,7 @@ export default async function BookCourtPage({
           clubId={court.userid}
           bookings={bookings}
           playerUserId={userId}
+          courtPrice={court.price}
         />
       </div>
     </div>

@@ -12,11 +12,23 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json()
-    const { terenid, clubid, starttime, endtime } = body
+    const { terenid, clubid, starttime, endtime, paymentMethod = 'in_person' } = body
 
     const validation = validateBookingFields(body)
     if (!validation.valid) {
       return NextResponse.json({ error: validation.error }, { status: 400 })
+    }
+
+    // Prevent retroactive bookings
+    const bookingStart = new Date(starttime)
+    const now = new Date()
+    if (bookingStart < now) {
+      return NextResponse.json({ error: 'Cannot create bookings in the past' }, { status: 400 })
+    }
+
+    // Validate payment method
+    if (!['in_person', 'online'].includes(paymentMethod)) {
+      return NextResponse.json({ error: 'Invalid payment method' }, { status: 400 })
     }
 
     const existingBookings = await sql`
@@ -29,7 +41,13 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'This time slot is already booked' }, { status: 409 })
     }
 
-    // Create the booking (unconfirmed by default, club needs to confirm)
+    // Only handle in-person payment here
+    // Online payments are handled through Stripe checkout session
+    if (paymentMethod === 'online') {
+      return NextResponse.json({ error: 'Use /api/stripe/create-checkout-session for online payments' }, { status: 400 })
+    }
+
+    // For in-person payment, create unconfirmed booking
     const result = await sql`
       INSERT INTO termin (terenid, playerid, clubid, starttime, endtime, confirmed)
       VALUES (${terenid}, ${userId}, ${clubid}, ${starttime}, ${endtime}, false)

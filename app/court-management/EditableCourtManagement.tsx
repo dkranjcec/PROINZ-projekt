@@ -15,6 +15,7 @@ interface Court {
   ground: string
   height?: number | null
   lights?: 'yes' | 'no' | null
+  price?: number | null
   photos: string[]
 }
 
@@ -38,6 +39,7 @@ export default function EditableCourtManagement({ courts }: EditableCourtManagem
       ground: '',
       height: null,
       lights: 'yes',
+      price: null,
       photos: []
     }, ...prev])
   }
@@ -141,7 +143,8 @@ export default function EditableCourtManagement({ courts }: EditableCourtManagem
       })
 
       if (!response.ok) {
-        throw new Error('Failed to update courts')
+        const data = await response.json()
+        throw new Error(data.error || 'Failed to update courts')
       }
 
       setIsEditing(false)
@@ -305,6 +308,21 @@ export default function EditableCourtManagement({ courts }: EditableCourtManagem
                       </InputGroup>
                     </div>
 
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Price per Hour (€)
+                      </label>
+                      <InputGroup>
+                        <InputGroupInput
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          value={court.price || ''}
+                          onChange={(e) => updateCourt(index, 'price', parseFloat(e.target.value) || null)}
+                        />
+                      </InputGroup>
+                    </div>
+
                     {court.type === 'indoor' && (
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -401,6 +419,12 @@ export default function EditableCourtManagement({ courts }: EditableCourtManagem
                       <div>
                         <span className="text-sm text-gray-500">Ground:</span>
                         <p className="font-medium">{court.ground}</p>
+                      </div>
+                    )}
+                    {court.price != null && (
+                      <div>
+                        <span className="text-sm text-gray-500">Price per Hour:</span>
+                        <p className="font-medium">€{court.price}</p>
                       </div>
                     )}
                     {court.type === 'indoor' && court.height && (

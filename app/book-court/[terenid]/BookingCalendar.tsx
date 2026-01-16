@@ -4,6 +4,7 @@ import { useState, useRef } from 'react'
 import FullCalendar from '@fullcalendar/react'
 import timeGridPlugin from '@fullcalendar/timegrid'
 import interactionPlugin from '@fullcalendar/interaction'
+import PaymentModal from './PaymentModal'
 
 interface Booking {
   terenid: number
@@ -20,10 +21,14 @@ interface BookingCalendarProps {
   clubId: string
   bookings: Booking[]
   playerUserId: string
+  courtPrice?: number | null
 }
 
-export default function BookingCalendar({ courtId, courtName, clubId, bookings, playerUserId }: BookingCalendarProps) {
+export default function BookingCalendar({ courtId, courtName, clubId, bookings, playerUserId, courtPrice }: BookingCalendarProps) {
   const calendarRef = useRef<FullCalendar>(null)
+  const [showPaymentModal, setShowPaymentModal] = useState(false)
+  const [pendingBooking, setPendingBooking] = useState<{ startStr: string; endStr: string; view: any } | null>(null)
+  
   const [events] = useState(
     bookings.map(booking => {
       const isOwn = booking.playerid === playerUserId
@@ -56,11 +61,23 @@ export default function BookingCalendar({ courtId, courtName, clubId, bookings, 
   )
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async function handleDateSelect(selectInfo: any) {
-    const title = `Book ${courtName}?`
+    // If court has a price, show payment modal
+    if (courtPrice && courtPrice > 0) {
+      setPendingBooking(selectInfo)
+      setShowPaymentModal(true)
+    } else {
+      // No price, create booking directly (pending confirmation)
+      await createBooking(selectInfo, 'in_person')
+    }
     
-    if (confirm(title)) {
-      try {
-        const response = await fetch('/api/booking/create', {
+    selectInfo.view.calendar.unselect()
+  }
+
+  async function createBooking(selectInfo: any, paymentMethod: 'in_person' | 'online') {
+    try {
+      // For online payment, create Stripe checkout session
+      if (paymentMethod === 'online') {
+        const response = await fetch('/api/stripe/create-checkout-session', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -73,35 +90,84 @@ export default function BookingCalendar({ courtId, courtName, clubId, bookings, 
 
         if (!response.ok) {
           const error = await response.json()
-          alert(error.error || 'Failed to create booking')
+          alert(error.error || 'Failed to create payment session')
           return
         }
-        
-        // Add event to calendar (pending confirmation)
-        const calendarApi = selectInfo.view.calendar
-        calendarApi.addEvent({
-          id: `${playerUserId}-${selectInfo.startStr}`,
-          title: 'Your Booking (Pending)',
-          start: selectInfo.startStr,
-          end: selectInfo.endStr,
-          backgroundColor: '#f59e0b',
-          borderColor: '#d97706',
-          extendedProps: {
-            userId: playerUserId,
-            confirmed: false,
-            starttime: selectInfo.startStr
-          }
-        })
 
-        alert('Booking created successfully!')
-      } catch (error) {
-        console.error('Error creating booking:', error)
-        alert('Failed to create booking')
+        const data = await response.json()
+        
+        // Redirect to Stripe checkout
+        if (data.url) {
+          window.location.href = data.url
+          return
+        }
       }
+
+      // For in-person payment, create booking directly
+      const response = await fetch('/api/booking/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          terenid: courtId,
+          clubid: clubId,
+          starttime: selectInfo.startStr,
+          endtime: selectInfo.endStr,
+          paymentMethod,
+        })
+      })
+
+      if (!response.ok) {
+        const error = await response.json()
+        alert(error.error || 'Failed to create booking')
+        return
+      }
+      
+      // Add event to calendar (pending for in-person)
+      const calendarApi = selectInfo.view.calendar
+      
+      calendarApi.addEvent({
+        id: `${playerUserId}-${selectInfo.startStr}`,
+        title: 'Your Booking (Pending)',
+        start: selectInfo.startStr,
+        end: selectInfo.endStr,
+        backgroundColor: '#f59e0b',
+        borderColor: '#d97706',
+        extendedProps: {
+          userId: playerUserId,
+          confirmed: false,
+          starttime: selectInfo.startStr
+        }
+      })
+
+      alert('Booking created successfully!')
+    } catch (error) {
+      console.error('Error creating booking:', error)
+      alert('Failed to create booking')
     }
-    
-    selectInfo.view.calendar.unselect()
   }
+
+  function calculateDuration(startStr: string, endStr: string): number {
+    const start = new Date(startStr)
+    const end = new Date(endStr)
+    return (end.getTime() - start.getTime()) / (1000 * 60 * 60) // hours
+  }
+
+  async function handlePayInPerson() {
+    if (pendingBooking) {
+      await createBooking(pendingBooking, 'in_person')
+      setShowPaymentModal(false)
+      setPendingBooking(null)
+    }
+  }
+
+  async function handlePayOnline() {
+    if (pendingBooking) {
+      await createBooking(pendingBooking, 'online')
+      setShowPaymentModal(false)
+      setPendingBooking(null)
+    }
+  }
+  
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async function handleEventClick(clickInfo: any) {
     const event = clickInfo.event
@@ -187,9 +253,27 @@ export default function BookingCalendar({ courtId, courtName, clubId, bookings, 
 
       <div className="mt-4 text-sm text-gray-600">
         <p>• Click and drag on the calendar to create a booking</p>
-        <p>• Your bookings are pending until confirmed by the club</p>
+        {courtPrice && courtPrice > 0 ? (
+          <p>• Choose payment method: pay in person (pending) or pay online (confirmed)</p>
+        ) : (
+          <p>• Your bookings are pending until confirmed by the club</p>
+        )}
         <p>• Click on your booking to delete it</p>
       </div>
+
+      {showPaymentModal && pendingBooking && courtPrice && (
+        <PaymentModal
+          courtName={courtName}
+          courtPrice={courtPrice}
+          duration={calculateDuration(pendingBooking.startStr, pendingBooking.endStr)}
+          onClose={() => {
+            setShowPaymentModal(false)
+            setPendingBooking(null)
+          }}
+          onPayInPerson={handlePayInPerson}
+          onPayOnline={handlePayOnline}
+        />
+      )}
     </div>
   )
 }

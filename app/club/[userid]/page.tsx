@@ -6,6 +6,9 @@ import { Button } from '@/components/ui/button'
 import Header from '../../components/Header'
 import ReviewButton from './ReviewButton'
 
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
 interface PageProps {
   params: Promise<{
     userid: string
@@ -221,6 +224,12 @@ export default async function ClubPage({ params }: PageProps) {
                         <div>
                           <span className="text-sm text-gray-500">Ground:</span>
                           <p className="font-medium">{court.ground}</p>
+                        </div>
+                      )}
+                      {court.price != null && (
+                        <div>
+                          <span className="text-sm text-gray-500">Price per Hour:</span>
+                          <p className="font-medium">€{court.price}</p>
                         </div>
                       )}
                       {court.type === 'indoor' && court.height && (

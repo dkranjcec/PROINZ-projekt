@@ -6,6 +6,9 @@ import { Button } from '@/components/ui/button'
 import Header from '../components/Header'
 import BrowseClubsList from './BrowseClubsList'
 
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
 export default async function BrowseClubs() {
   const isTestMode = process.env.E2E_TESTING === 'true'
   

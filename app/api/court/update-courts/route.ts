@@ -29,11 +29,16 @@ export async function POST(request: Request) {
 
     // Insert updated courts
     for (const court of courts) {
-      const { terenname, type, size, ground, height, lights, photos } = court
+      const { terenname, type, size, ground, height, lights, price, photos } = court
+      
+      // Validate price is not negative
+      if (price != null && price < 0) {
+        return NextResponse.json({ error: 'Court prices cannot be negative. Please enter a valid price.' }, { status: 400 })
+      }
       
       // Insert court
       const [insertedCourt] = await sql`
-        INSERT INTO teren (userid, terenname, type, size, ground, height, lights)
+        INSERT INTO teren (userid, terenname, type, size, ground, height, lights, price)
         VALUES (
           ${userId},
           ${terenname},
@@ -41,7 +46,8 @@ export async function POST(request: Request) {
           ${size},
           ${ground || null},
           ${type === 'indoor' ? height : null},
-          ${type === 'outdoor' ? lights : null}
+          ${type === 'outdoor' ? lights : null},
+          ${price || null}
         )
         RETURNING terenid
       `

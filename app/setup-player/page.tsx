@@ -3,6 +3,9 @@ import { redirect } from 'next/navigation'
 import sql from '@/lib/db'
 import SetupPlayerForm from './SetupPlayerForm'
 
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
 export default async function SetupPlayer() {
   const isTestMode = process.env.E2E_TESTING === 'true'
   let userId = 'test-user-id'
