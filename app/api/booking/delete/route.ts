@@ -30,6 +30,26 @@ export async function DELETE(request: Request) {
       return NextResponse.json({ error: 'Booking not found or unauthorized' }, { status: 404 })
     }
 
+    const booking = bookings[0]
+
+    // Check if booking is at least 24 hours in the future
+    const bookingStart = new Date(booking.starttime)
+    const now = new Date()
+    const hoursUntilBooking = (bookingStart.getTime() - now.getTime()) / (1000 * 60 * 60)
+    
+    if (hoursUntilBooking < 24) {
+      return NextResponse.json({ 
+        error: 'Bookings can only be cancelled at least 24 hours in advance' 
+      }, { status: 400 })
+    }
+
+    // Check if this is a paid booking - should not be deleted through this endpoint
+    if (booking.confirmed && booking.stripesessionid) {
+      return NextResponse.json({ 
+        error: 'Paid bookings must be cancelled through the dashboard to receive a refund' 
+      }, { status: 400 })
+    }
+
     // Delete the booking
     await sql`
       DELETE FROM termin 

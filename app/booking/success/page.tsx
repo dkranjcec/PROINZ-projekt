@@ -10,6 +10,7 @@ export const revalidate = 0
 interface PageProps {
   searchParams: Promise<{
     session_id?: string
+    terenid?: string
   }>
 }
 
@@ -21,6 +22,7 @@ export default async function BookingSuccess({ searchParams }: PageProps) {
   }
 
   const params = await searchParams
+  const sessionId = params.session_id
 
   return (
     <>
@@ -51,8 +53,15 @@ export default async function BookingSuccess({ searchParams }: PageProps) {
           )}
 
           <div className="space-y-3">
+            {params.terenid && (
+              <Link href={`/book-court/${params.terenid}`} className="block">
+                <Button className="w-full bg-green-600 hover:bg-green-700">
+                  View Calendar
+                </Button>
+              </Link>
+            )}
             <Link href="/dashboard" className="block">
-              <Button className="w-full bg-green-600 hover:bg-green-700">
+              <Button variant={params.terenid ? "secondary" : "default"} className={params.terenid ? "w-full" : "w-full bg-green-600 hover:bg-green-700"}>
                 Go to Dashboard
               </Button>
             </Link>

@@ -54,7 +54,8 @@ export default async function CourtBookingsPage() {
     lastname: string
     phone_number: string
   }[]>`
-    SELECT t.*, p.firstname, p.lastname, p.phone_number, teren.terenname
+    SELECT t.terenid, t.playerid, t.clubid, t.starttime, t.endtime, t.confirmed,
+           p.firstname, p.lastname, p.phone_number, teren.terenname
     FROM termin t
     JOIN player p ON t.playerid = p.userid
     JOIN teren ON t.terenid = teren.terenid

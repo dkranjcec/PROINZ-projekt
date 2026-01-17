@@ -30,11 +30,20 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'This court does not require payment' }, { status: 400 })
     }
 
+    // Prevent retroactive bookings
+    const bookingStart = new Date(starttime)
+    const now = new Date()
+    if (bookingStart < now) {
+      return NextResponse.json({ error: 'Cannot create bookings in the past' }, { status: 400 })
+    }
+
     // Calculate duration and total price
     const start = new Date(starttime)
     const end = new Date(endtime)
     const durationHours = (end.getTime() - start.getTime()) / (1000 * 60 * 60)
-    const totalPrice = court.price * durationHours
+    const bookingPrice = court.price * durationHours
+    const platformFee = 2.00 // €2 platform fee
+    const totalPrice = bookingPrice + platformFee
 
     // Get base URL from request origin (works for both local and production)
     const origin = request.headers.get('origin') || process.env.NEXT_PUBLIC_URL || 'http://localhost:3000'
@@ -50,13 +59,24 @@ export async function POST(request: Request) {
               name: `${court.terenname} - ${court.clubname}`,
               description: `Court booking for ${durationHours} hour${durationHours !== 1 ? 's' : ''}`,
             },
-            unit_amount: Math.round(totalPrice * 100), // Convert to cents
+            unit_amount: Math.round(bookingPrice * 100), // Convert to cents
+          },
+          quantity: 1,
+        },
+        {
+          price_data: {
+            currency: 'eur',
+            product_data: {
+              name: 'Platform Service Fee',
+              description: 'Non-refundable processing fee',
+            },
+            unit_amount: 200, // €2 in cents
           },
           quantity: 1,
         },
       ],
       mode: 'payment',
-      success_url: `${origin}/booking/success?session_id={CHECKOUT_SESSION_ID}`,
+      success_url: `${origin}/booking/success?session_id={CHECKOUT_SESSION_ID}&terenid=${terenid}`,
       cancel_url: `${origin}/book-court/${terenid}`,
       metadata: {
         terenid,

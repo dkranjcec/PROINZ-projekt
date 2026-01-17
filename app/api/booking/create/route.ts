@@ -2,6 +2,7 @@ import { auth } from '@clerk/nextjs/server'
 import sql from '@/lib/db'
 import { NextResponse } from 'next/server'
 import { validateBookingFields, hasAnyOverlap } from '@/lib/booking-utils'
+import { notifyClubNewBooking } from '@/lib/notifications'
 
 export async function POST(request: Request) {
   try {
@@ -53,6 +54,9 @@ export async function POST(request: Request) {
       VALUES (${terenid}, ${userId}, ${clubid}, ${starttime}, ${endtime}, false)
       RETURNING *
     `
+
+    // Notify club of new booking request
+    await notifyClubNewBooking(terenid, userId, clubid, starttime, endtime, 'pending')
 
     return NextResponse.json(result[0], { status: 201 })
   } catch (error) {

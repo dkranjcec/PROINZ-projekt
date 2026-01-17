@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
@@ -21,6 +21,20 @@ interface Player {
   skill_level: string
 }
 
+interface Booking {
+  terminid: number
+  terenid: number
+  playerid: string
+  clubid: string
+  terenname: string
+  clubname: string
+  starttime: string
+  endtime: string
+  confirmed: boolean
+  stripesessionid: string | null
+  price: number | null
+}
+
 interface EditablePlayerDashboardProps {
   player: Player
 }
@@ -36,6 +50,67 @@ export default function EditablePlayerDashboard({ player }: EditablePlayerDashbo
   const [skillLevel, setSkillLevel] = useState(player.skill_level || '')
   const [isSaving, setIsSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [pastBookings, setPastBookings] = useState<Booking[]>([])
+  const [upcomingBookings, setUpcomingBookings] = useState<Booking[]>([])
+  const [loadingBookings, setLoadingBookings] = useState(true)
+  const [cancellingId, setCancellingId] = useState<string | null>(null)
+
+  useEffect(() => {
+    fetchBookings()
+  }, [])
+
+  async function fetchBookings() {
+    try {
+      const response = await fetch('/api/booking/my-bookings')
+      if (response.ok) {
+        const data = await response.json()
+        setPastBookings(data.past || [])
+        setUpcomingBookings(data.upcoming || [])
+      }
+    } catch (err) {
+      console.error('Error fetching bookings:', err)
+    } finally {
+      setLoadingBookings(false)
+    }
+  }
+
+  async function handleCancelBooking(booking: Booking, isPaid: boolean) {
+    const confirmMessage = isPaid 
+      ? 'Are you sure you want to cancel this booking? You will be refunded minus the €2 platform fee.'
+      : 'Are you sure you want to cancel this booking?'
+    
+    if (!confirm(confirmMessage)) {
+      return
+    }
+
+    setCancellingId(booking.starttime)
+    try {
+      const response = await fetch('/api/booking/cancel', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          terenid: booking.terenid,
+          clubid: booking.clubid,
+          playerid: booking.playerid,
+          starttime: booking.starttime
+        })
+      })
+
+      const data = await response.json()
+      
+      if (!response.ok) {
+        alert(data.error || 'Failed to cancel booking')
+        return
+      }
+
+      alert(data.message)
+      fetchBookings() // Refresh bookings list
+    } catch (err) {
+      alert('Failed to cancel booking. Please try again.')
+    } finally {
+      setCancellingId(null)
+    }
+  }
 
   function formatTime(time: string) {
     return time.substring(0, 5)
@@ -213,12 +288,83 @@ export default function EditablePlayerDashboard({ player }: EditablePlayerDashbo
       </div>
 
       {!isEditing && (
+        <>
+          <div className="bg-white rounded-lg shadow p-6 mb-6">
+            <h2 className="text-xl font-semibold mb-4">Upcoming Bookings</h2>
+            {loadingBookings ? (
+              <p className="text-gray-600">Loading bookings...</p>
+            ) : upcomingBookings.length === 0 ? (
+              <p className="text-gray-600">No upcoming bookings</p>
+            ) : (
+              <div className="space-y-3">
+                {upcomingBookings.map((booking, index) => (
+                  <div key={`upcoming-${booking.terminid}-${index}`} className="border border-gray-200 rounded-lg p-4">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <h3 className="font-semibold text-gray-900">{booking.terenname}</h3>
+                        <p className="text-sm text-gray-600">{booking.clubname}</p>
+                        <p className="text-sm text-gray-600 mt-1">
+                          {new Date(booking.starttime).toLocaleString()} - {new Date(booking.endtime).toLocaleTimeString()}
+                        </p>
+                        <p className="text-sm mt-1">
+                          <span className={`inline-block px-2 py-1 rounded text-xs ${
+                            booking.confirmed ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
+                          }`}>
+                            {booking.confirmed ? 'Confirmed' : 'Pending Confirmation'}
+                          </span>
+                        </p>
+                      </div>
+                      <Button
+                        onClick={() => handleCancelBooking(booking, !!booking.stripesessionid)}
+                        disabled={cancellingId === booking.starttime}
+                        variant="destructive"
+                        size="sm"
+                      >
+                        {cancellingId === booking.starttime ? 'Cancelling...' : (booking.stripesessionid ? 'Cancel & Refund' : 'Cancel')}
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="bg-white rounded-lg shadow p-6 mb-6">
+            <h2 className="text-xl font-semibold mb-4">Past Bookings</h2>
+            {loadingBookings ? (
+              <p className="text-gray-600">Loading bookings...</p>
+            ) : pastBookings.length === 0 ? (
+              <p className="text-gray-600">No past bookings</p>
+            ) : (
+              <div className="space-y-3">
+                {pastBookings.map((booking, index) => (
+                  <div key={`past-${booking.terminid}-${index}`} className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                    <h3 className="font-semibold text-gray-900">{booking.terenname}</h3>
+                    <p className="text-sm text-gray-600">{booking.clubname}</p>
+                    <p className="text-sm text-gray-600 mt-1">
+                      {new Date(booking.starttime).toLocaleString()} - {new Date(booking.endtime).toLocaleTimeString()}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="mt-6 pt-6 border-t border-gray-200">
+            <Link href="/browse-clubs">
+              <Button className="w-full bg-green-600 hover:bg-green-700">
+                Browse Clubs
+              </Button>
+            </Link>
+          </div>
+        </>
+      )}
+
+      {isEditing && (
         <div className="mt-6 pt-6 border-t border-gray-200">
-          <Link href="/browse-clubs">
-            <Button className="w-full bg-green-600 hover:bg-green-700">
-              Browse Clubs
-            </Button>
-          </Link>
+          <p className="text-sm text-gray-500">
+            Save your changes to view bookings
+          </p>
         </div>
       )}
     </>

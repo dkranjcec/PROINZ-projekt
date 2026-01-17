@@ -49,7 +49,8 @@ export default async function BookCourtPage({
     endtime: string
     confirmed: boolean
   }[]>`
-    SELECT * FROM termin 
+    SELECT terenid, playerid, clubid, starttime, endtime, confirmed
+    FROM termin 
     WHERE terenid = ${terenid}
     ORDER BY starttime ASC
   `

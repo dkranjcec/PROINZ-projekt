@@ -1,5 +1,6 @@
 import { SignInButton, SignedIn, SignedOut, UserButton } from '@clerk/nextjs'
 import { Button } from '@/components/ui/button'
+import NotificationBell from './NotificationBell'
 
 export default function Header() {
   return (
@@ -19,6 +20,7 @@ export default function Header() {
           </SignedOut>
           
           <SignedIn>
+            <NotificationBell />
             <UserButton afterSignOutUrl="/" />
           </SignedIn>
         </div>

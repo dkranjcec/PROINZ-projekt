@@ -1,6 +1,7 @@
 import { auth } from '@clerk/nextjs/server'
 import sql from '@/lib/db'
 import { NextResponse } from 'next/server'
+import { notifyBookingConfirmed, createBookingReminder } from '@/lib/notifications'
 
 export async function POST(request: Request) {
   try {
@@ -50,7 +51,21 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Booking not found' }, { status: 404 })
     }
 
-    return NextResponse.json(result[0], { status: 200 })
+    const booking = result[0]
+    
+    // Send notification and email to player
+    await notifyBookingConfirmed(
+      terenid,
+      playerid,
+      userId,
+      booking.starttime,
+      booking.endtime
+    )
+
+    // Create scheduled reminder for booking day
+    await createBookingReminder(terenid, playerid, userId, booking.starttime)
+
+    return NextResponse.json(booking, { status: 200 })
   } catch (error) {
     console.error('Error confirming booking:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
