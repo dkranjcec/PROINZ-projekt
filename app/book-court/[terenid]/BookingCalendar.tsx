@@ -229,6 +229,7 @@ export default function BookingCalendar({ courtId, courtName, clubId, bookings, 
         ref={calendarRef}
         plugins={[timeGridPlugin, interactionPlugin]}
         initialView="timeGridWeek"
+        timeZone="local"
         headerToolbar={{
           left: 'prev,next today',
           center: 'title',
