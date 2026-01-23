@@ -75,8 +75,9 @@ export default async function BookCourtPage({
     day_of_week: number
     start_time: string
     end_time: string
+    first_booking_date: string
   }[]>`
-    SELECT recurringid, playerid, day_of_week, start_time, end_time
+    SELECT recurringid, playerid, day_of_week, start_time, end_time, first_booking_date
     FROM recurring_booking
     WHERE terenid = ${terenid}
       AND is_active = true

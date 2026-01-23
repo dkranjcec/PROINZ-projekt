@@ -4,6 +4,15 @@ import sql from '@/lib/db'
 import { headers } from 'next/headers'
 import { notifyBookingConfirmed, notifyClubNewBooking, createBookingReminder } from '@/lib/notifications'
 
+// Temporary GET endpoint to test if route is accessible
+export async function GET() {
+  console.log('[WEBHOOK] GET request received - route is accessible!')
+  return NextResponse.json({ 
+    message: 'Webhook endpoint is accessible',
+    timestamp: new Date().toISOString() 
+  })
+}
+
 export async function POST(request: Request) {
   const body = await request.text()
   const headersList = await headers()
@@ -164,13 +173,13 @@ export async function POST(request: Request) {
 
         console.log('[WEBHOOK] Subscription created:', subscription.id)
 
-        // Save recurring booking record
+        // Save recurring booking record with first booking date
         await sql`
           INSERT INTO recurring_booking (
-            playerid, terenid, clubid, day_of_week, start_time, end_time, price, stripe_subscription_id
+            playerid, terenid, clubid, day_of_week, start_time, end_time, price, stripe_subscription_id, first_booking_date
           )
           VALUES (
-            ${playerid}, ${terenid}, ${clubid}, ${dayOfWeek}, ${startTime}, ${endTime}, ${price}, ${subscription.id}
+            ${playerid}, ${terenid}, ${clubid}, ${dayOfWeek}, ${startTime}, ${endTime}, ${price}, ${subscription.id}, ${starttime}
           )
         `
 

@@ -27,6 +27,7 @@ interface RecurringBooking {
   day_of_week: number
   start_time: string
   end_time: string
+  first_booking_date: string
 }
 
 interface BookingCalendarProps {
@@ -95,9 +96,11 @@ export default function BookingCalendar({ courtId, courtName, clubId, bookings, 
       for (const recurring of recurringBookings) {
         const isOwn = recurring.playerid === playerUserId
         
-        // Generate occurrences for calendar visible range (only future dates)
+        // Generate occurrences starting from first booking date (not before)
+        const firstBookingDate = new Date(recurring.first_booking_date)
         const now = new Date()
-        const current = new Date(Math.max(fetchInfo.start.getTime(), now.getTime()))
+        const startFrom = Math.max(fetchInfo.start.getTime(), firstBookingDate.getTime(), now.getTime())
+        const current = new Date(startFrom)
         const end = new Date(fetchInfo.end)
         
         while (current <= end) {
