@@ -66,12 +66,13 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'This time slot is already booked' }, { status: 409 })
     }
 
-    // Check for conflicts with recurring bookings
+    // Check for conflicts with recurring bookings that have already started
     const recurringBookings = await sql`
-      SELECT day_of_week, start_time, end_time
+      SELECT day_of_week, start_time, end_time, first_booking_date
       FROM recurring_booking
       WHERE terenid = ${terenid}
         AND is_active = true
+        AND first_booking_date <= ${starttime}
     `
 
     const bookingDayOfWeek = bookingStart.getDay() === 0 ? 7 : bookingStart.getDay()
