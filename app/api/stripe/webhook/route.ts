@@ -32,30 +32,62 @@ export async function POST(request: Request) {
     const metadata = session.metadata || {}
     const { terenid, clubid, playerid, starttime, endtime, makeRecurring } = metadata
 
+    console.log('[WEBHOOK] checkout.session.completed received:', {
+      sessionId: session.id,
+      metadata: { terenid, clubid, playerid, starttime, endtime, makeRecurring }
+    })
+
     if (!terenid || !clubid || !playerid || !starttime || !endtime) {
-      console.error('Missing metadata in session')
+      console.error('[WEBHOOK] Missing metadata in session:', metadata)
       return NextResponse.json({ error: 'Missing metadata' }, { status: 400 })
     }
 
     try {
-      // Create first booking (confirmed immediately since payment succeeded)
-      const result = await sql`
-        INSERT INTO termin (playerid, terenid, clubid, starttime, endtime, confirmed, stripesessionid)
-        VALUES (${playerid}, ${terenid}, ${clubid}, ${starttime}, ${endtime}, true, ${session.id})
-        ON CONFLICT DO NOTHING
-        RETURNING *
+      // Check if booking already exists
+      const existing = await sql`
+        SELECT * FROM termin 
+        WHERE terenid = ${terenid} 
+          AND starttime = ${starttime}
+          AND endtime = ${endtime}
       `
 
-      // Only proceed if booking was created
-      if (result.length === 0) {
-        console.error('Booking already exists or could not be created')
-        return NextResponse.json({ error: 'Booking already exists' }, { status: 400 })
+      if (existing.length > 0) {
+        console.log('[WEBHOOK] Booking already exists, updating stripe session ID:', existing[0])
+        // Update existing booking with stripe session ID if missing
+        await sql`
+          UPDATE termin 
+          SET stripesessionid = ${session.id}, confirmed = true
+          WHERE terenid = ${terenid} 
+            AND starttime = ${starttime}
+            AND endtime = ${endtime}
+        `
+        console.log('[WEBHOOK] Updated existing booking with stripe session')
+      } else {
+        // Create first booking (confirmed immediately since payment succeeded)
+        const result = await sql`
+          INSERT INTO termin (playerid, terenid, clubid, starttime, endtime, confirmed, stripesessionid)
+          VALUES (${playerid}, ${terenid}, ${clubid}, ${starttime}, ${endtime}, true, ${session.id})
+          RETURNING *
+        `
+
+        if (result.length === 0) {
+          console.error('[WEBHOOK] Failed to create booking - no rows returned')
+          throw new Error('Failed to create booking')
+        }
+
+        console.log('[WEBHOOK] Booking created successfully:', result[0])
       }
 
       // Notify about first booking
-      await notifyClubNewBooking(terenid, playerid, clubid, starttime, endtime, 'paid')
-      await notifyBookingConfirmed(terenid, playerid, clubid, starttime, endtime)
-      await createBookingReminder(terenid, playerid, clubid, starttime)
+      try {
+        await notifyClubNewBooking(terenid, playerid, clubid, starttime, endtime, 'paid')
+        await notifyBookingConfirmed(terenid, playerid, clubid, starttime, endtime)
+        await createBookingReminder(terenid, playerid, clubid, starttime)
+        console.log('[WEBHOOK] Notifications sent successfully')
+      } catch (notifError) {
+        console.error('[WEBHOOK] Error sending notifications:', notifError)
+        // Don't fail the webhook if notifications fail
+      }
 
       // If this is a recurring booking, create subscription
       if (makeRecurring === 'true') {
@@ -132,10 +164,18 @@ export async function POST(request: Request) {
         console.log('Recurring booking created with subscription:', subscription.id)
       }
 
-      console.log('Booking confirmed:', { terenid, playerid, starttime })
+      console.log('[WEBHOOK] Booking confirmed successfully:', { terenid, playerid, starttime })
     } catch (error) {
-      console.error('Error processing payment:', error)
-      return NextResponse.json({ error: 'Failed to process payment' }, { status: 500 })
+      console.error('[WEBHOOK] Error processing payment:', error)
+      console.error('[WEBHOOK] Error details:', {
+        message: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : undefined
+      })
+      // Return 500 so Stripe knows to retry
+      return NextResponse.json({ 
+        error: 'Failed to process payment',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      }, { status: 500 })
     }
   }
 
