@@ -9,7 +9,10 @@ export async function POST(request: Request) {
   const headersList = await headers()
   const sig = headersList.get('stripe-signature')
 
+  console.log('[WEBHOOK] Incoming webhook request')
+
   if (!sig) {
+    console.error('[WEBHOOK] No signature found')
     return NextResponse.json({ error: 'No signature' }, { status: 400 })
   }
 
@@ -21,8 +24,9 @@ export async function POST(request: Request) {
       sig,
       process.env.STRIPE_WEBHOOK_SECRET!
     )
+    console.log('[WEBHOOK] Event verified:', event.type)
   } catch (err) {
-    console.error('Webhook signature verification failed:', err)
+    console.error('[WEBHOOK] Signature verification failed:', err)
     return NextResponse.json({ error: 'Invalid signature' }, { status: 400 })
   }
 
@@ -64,15 +68,26 @@ export async function POST(request: Request) {
         console.log('[WEBHOOK] Updated existing booking with stripe session')
       } else {
         // Create first booking (confirmed immediately since payment succeeded)
-        const result = await sql`
+        console.log('[WEBHOOK] Creating new booking with:', {
+          playerid,
+          terenid,
+          clubid,
+          starttime,
+          endtime,
+          sessionId: session.id
+        })
+
+      const result = await sql`
           INSERT INTO termin (playerid, terenid, clubid, starttime, endtime, confirmed, stripesessionid)
           VALUES (${playerid}, ${terenid}, ${clubid}, ${starttime}, ${endtime}, true, ${session.id})
-          RETURNING *
-        `
+        RETURNING *
+      `
+
+        console.log('[WEBHOOK] SQL insert result:', { rowCount: result.length, rows: result })
 
         if (result.length === 0) {
           console.error('[WEBHOOK] Failed to create booking - no rows returned')
-          throw new Error('Failed to create booking')
+          throw new Error('Failed to create booking - database insert returned no rows')
         }
 
         console.log('[WEBHOOK] Booking created successfully:', result[0])
@@ -93,13 +108,7 @@ export async function POST(request: Request) {
       if (makeRecurring === 'true') {
         const { dayOfWeek, startTime, endTime, price } = metadata
 
-        // Calculate next occurrence (7 days from first booking)
-        // Parse as UTC to preserve the exact date
-        const firstBookingDate = new Date(starttime)
-        const nextOccurrence = new Date(firstBookingDate.getTime() + (7 * 24 * 60 * 60 * 1000))
-
-        // Billing anchor = 6 days before next booking
-        const billingAnchor = new Date(nextOccurrence.getTime() - (6 * 24 * 60 * 60 * 1000))
+        console.log('[WEBHOOK] Creating recurring subscription')
 
         // Get payment method from session to attach to subscription
         const paymentIntentId = session.payment_intent as string
@@ -124,12 +133,23 @@ export async function POST(request: Request) {
           },
         })
 
-        // Create subscription with explicit payment method
+        // Calculate billing date: first booking + 1 day
+        // User just paid NOW for the first booking (via checkout)
+        // Subscription should start billing on: first booking + 1 day
+        // Then bill every 7 days after that (weekly interval)
+        const firstBookingDate = new Date(starttime)
+        const firstSubscriptionBillingDate = new Date(firstBookingDate.getTime() + (24 * 60 * 60 * 1000))
+
+        console.log('[WEBHOOK] First booking:', firstBookingDate.toISOString())
+        console.log('[WEBHOOK] First subscription bill will be:', firstSubscriptionBillingDate.toISOString())
+
+        // Create subscription with trial period until first billing date
+        // This way the subscription starts now but doesn't charge until trial ends
         const subscription = await stripe.subscriptions.create({
           customer: customerId,
           items: [{ price: stripePrice.id }],
           default_payment_method: paymentMethodId,
-          billing_cycle_anchor: Math.floor(billingAnchor.getTime() / 1000),
+          trial_end: Math.floor(firstSubscriptionBillingDate.getTime() / 1000),
           proration_behavior: 'none',
           metadata: {
             playerid,
@@ -141,6 +161,8 @@ export async function POST(request: Request) {
             price
           },
         })
+
+        console.log('[WEBHOOK] Subscription created:', subscription.id)
 
         // Save recurring booking record
         await sql`
@@ -316,5 +338,6 @@ export async function POST(request: Request) {
     }
   }
 
+  console.log('[WEBHOOK] Event processed, returning 200')
   return NextResponse.json({ received: true })
 }

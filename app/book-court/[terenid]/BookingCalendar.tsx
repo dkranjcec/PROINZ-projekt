@@ -95,33 +95,36 @@ export default function BookingCalendar({ courtId, courtName, clubId, bookings, 
       for (const recurring of recurringBookings) {
         const isOwn = recurring.playerid === playerUserId
         
-        // Generate occurrences for calendar visible range
-        const current = new Date(fetchInfo.start)
+        // Generate occurrences for calendar visible range (only future dates)
+        const now = new Date()
+        const current = new Date(Math.max(fetchInfo.start.getTime(), now.getTime()))
         const end = new Date(fetchInfo.end)
         
         while (current <= end) {
-          const currentDay = current.getUTCDay()
-          const targetDay = recurring.day_of_week === 7 ? 0 : recurring.day_of_week
+          // Get timezone offset for current date
+          const formatter = new Intl.DateTimeFormat('en-US', {
+            timeZone: 'Europe/Zagreb',
+            timeZoneName: 'longOffset'
+          })
+          const parts = formatter.formatToParts(current)
+          const offsetPart = parts.find(p => p.type === 'timeZoneName')
+          const offset = offsetPart?.value.replace('GMT', '') || '+01:00'
           
-          if (currentDay === targetDay) {
-            const dateString = current.toISOString().split('T')[0]
-            
-            // Get timezone offset
-            const formatter = new Intl.DateTimeFormat('en-US', {
-              timeZone: 'Europe/Zagreb',
-              timeZoneName: 'longOffset'
-            })
-            const parts = formatter.formatToParts(current)
-            const offsetPart = parts.find(p => p.type === 'timeZoneName')
-            const offset = offsetPart?.value.replace('GMT', '') || '+01:00'
-            
+          // Create date in Europe/Zagreb timezone to get correct day of week
+          const dateString = current.toISOString().split('T')[0]
+          const dateInTimezone = new Date(`${dateString}T12:00:00${offset}`)
+          const currentDay = dateInTimezone.getDay() === 0 ? 7 : dateInTimezone.getDay()
+          
+          if (currentDay === recurring.day_of_week) {
             const eventStart = `${dateString}T${recurring.start_time}${offset}`
             const eventEnd = `${dateString}T${recurring.end_time}${offset}`
+            const eventStartDate = new Date(eventStart)
 
-            // Only add if not already in actual bookings
+            // Only add if in the future and not already in actual bookings
             const alreadyBooked = bookings.some(b => b.starttime === eventStart)
+            const isInFuture = eventStartDate >= now
             
-            if (!alreadyBooked) {
+            if (!alreadyBooked && isInFuture) {
               events.push({
                 id: `recurring-${recurring.recurringid}-${dateString}`,
                 title: isOwn ? 'Your Recurring Booking' : 'Recurring Booking',
@@ -139,9 +142,9 @@ export default function BookingCalendar({ courtId, courtName, clubId, bookings, 
             }
           }
           
-        current.setDate(current.getDate() + 1)
+          current.setDate(current.getDate() + 1)
+        }
       }
-    }
 
     successCallback(events)
   } catch (error) {

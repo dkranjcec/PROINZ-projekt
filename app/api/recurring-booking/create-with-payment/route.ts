@@ -33,7 +33,57 @@ export async function POST(request: Request) {
     const startTime = starttime.split('T')[1].substring(0, 5) // HH:MM
     const endTime = endtime.split('T')[1].substring(0, 5)
 
-    // Check for conflicts with other recurring bookings (any user)
+    // Check for conflicts with existing bookings - use the same logic as regular bookings
+    const existingBookings = await sql`
+      SELECT starttime, endtime FROM termin 
+      WHERE terenid = ${terenid}
+    `
+
+    const { hasAnyOverlap } = await import('@/lib/booking-utils')
+    
+    // Check if the first instance of this recurring booking conflicts with existing bookings
+    if (hasAnyOverlap(existingBookings as any, { starttime, endtime })) {
+      return NextResponse.json({ 
+        error: 'This time slot is already booked' 
+      }, { status: 409 })
+    }
+
+    // Check if future instances would conflict with existing future bookings
+    // Look at all future bookings on the same day of week
+    const futureBookings = existingBookings.filter((booking: any) => {
+      const bookingDate = new Date(booking.starttime)
+      const bookingDayOfWeek = bookingDate.getDay() === 0 ? 7 : bookingDate.getDay()
+      return bookingDayOfWeek === dayOfWeek && bookingDate > startDate
+    })
+
+    // For each future booking on the same day, check if times overlap
+    for (const booking of futureBookings) {
+      const bookingStart = new Date(booking.starttime)
+      const bookingEnd = new Date(booking.endtime)
+      
+      // Create virtual recurring booking for comparison
+      const recurringBookingDate = new Date(bookingStart)
+      recurringBookingDate.setHours(parseInt(startTime.split(':')[0]))
+      recurringBookingDate.setMinutes(parseInt(startTime.split(':')[1]))
+      recurringBookingDate.setSeconds(0)
+      
+      const recurringBookingEndDate = new Date(bookingStart)
+      recurringBookingEndDate.setHours(parseInt(endTime.split(':')[0]))
+      recurringBookingEndDate.setMinutes(parseInt(endTime.split(':')[1]))
+      recurringBookingEndDate.setSeconds(0)
+
+      // Check if they overlap using the same logic
+      if (hasAnyOverlap([booking] as any, { 
+        starttime: recurringBookingDate.toISOString(), 
+        endtime: recurringBookingEndDate.toISOString() 
+      })) {
+        return NextResponse.json({ 
+          error: 'This recurring time slot conflicts with an existing future booking' 
+        }, { status: 409 })
+      }
+    }
+
+    // Check for conflicts with other recurring bookings (same day and overlapping time)
     const conflictingRecurring = await sql`
       SELECT * FROM recurring_booking
       WHERE terenid = ${terenid}
