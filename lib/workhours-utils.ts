@@ -31,16 +31,44 @@ export async function validateBookingWithinWorkHours(
       return { valid: true }
     }
 
+    // Parse booking times and convert to Europe/Zagreb timezone for comparison
+    // This ensures we compare booking times with work hours in the same timezone
     const start = new Date(starttime)
     const end = new Date(endtime)
 
-    // Get day of week (JavaScript: 0=Sunday, 1=Monday, ..., 6=Saturday)
-    // Convert to database format (1=Monday, 2=Tuesday, ..., 7=Sunday)
-    const jsDay = start.getDay()
+    // Convert to Europe/Zagreb timezone for accurate day and time comparison
+    const formatter = new Intl.DateTimeFormat('en-US', {
+      timeZone: 'Europe/Zagreb',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false
+    })
+
+    // Get day of week in Europe/Zagreb timezone
+    // JavaScript: 0=Sunday, 1=Monday, ..., 6=Saturday
+    // Database: 1=Monday, 2=Tuesday, ..., 7=Sunday
+    const startParts = formatter.formatToParts(start)
+    const endParts = formatter.formatToParts(end)
+    
+    const startDay = new Date(
+      parseInt(startParts.find(p => p.type === 'year')!.value),
+      parseInt(startParts.find(p => p.type === 'month')!.value) - 1,
+      parseInt(startParts.find(p => p.type === 'day')!.value)
+    )
+    const endDay = new Date(
+      parseInt(endParts.find(p => p.type === 'year')!.value),
+      parseInt(endParts.find(p => p.type === 'month')!.value) - 1,
+      parseInt(endParts.find(p => p.type === 'day')!.value)
+    )
+
+    const jsDay = startDay.getDay()
     const dbDay = jsDay === 0 ? 7 : jsDay
 
-    // Check if booking spans multiple days
-    if (start.getDate() !== end.getDate()) {
+    // Check if booking spans multiple days (in Europe/Zagreb timezone)
+    if (startDay.getTime() !== endDay.getTime()) {
       return { 
         valid: false, 
         error: 'Bookings cannot span multiple days' 
@@ -57,22 +85,39 @@ export async function validateBookingWithinWorkHours(
       }
     }
 
-    // Format booking times as HH:MM for comparison
-    const bookingStartTime = `${String(start.getHours()).padStart(2, '0')}:${String(start.getMinutes()).padStart(2, '0')}`
-    const bookingEndTime = `${String(end.getHours()).padStart(2, '0')}:${String(end.getMinutes()).padStart(2, '0')}`
+    // Format booking times as HH:MM in Europe/Zagreb timezone for comparison
+    const bookingStartTime = `${startParts.find(p => p.type === 'hour')!.value}:${startParts.find(p => p.type === 'minute')!.value}`
+    const bookingEndTime = `${endParts.find(p => p.type === 'hour')!.value}:${endParts.find(p => p.type === 'minute')!.value}`
 
     // Check if booking falls within any of the work hour ranges for this day
     const isWithinWorkHours = dayWorkHours.some(wh => {
       const workStart = wh.start_time.substring(0, 5) // Get HH:MM
       const workEnd = wh.end_time.substring(0, 5)
 
-      return bookingStartTime >= workStart && bookingEndTime <= workEnd
+      const isValid = bookingStartTime >= workStart && bookingEndTime <= workEnd
+      
+      // Debug logging
+      console.log('[WORKHOURS] Comparing:', {
+        bookingTime: `${bookingStartTime}-${bookingEndTime}`,
+        workHours: `${workStart}-${workEnd}`,
+        isValid,
+        dayOfWeek: dbDay
+      })
+
+      return isValid
     })
 
     if (!isWithinWorkHours) {
       const hoursStr = dayWorkHours
         .map(wh => `${wh.start_time.substring(0, 5)}-${wh.end_time.substring(0, 5)}`)
         .join(', ')
+      console.error('[WORKHOURS] Validation failed:', {
+        bookingTime: `${bookingStartTime}-${bookingEndTime}`,
+        workHours: hoursStr,
+        dayOfWeek: dbDay,
+        originalStarttime: starttime,
+        originalEndtime: endtime
+      })
       return { 
         valid: false, 
         error: `Booking must be within work hours: ${hoursStr}` 
