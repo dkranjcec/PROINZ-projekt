@@ -2,7 +2,7 @@ import { auth } from '@clerk/nextjs/server'
 import sql from '@/lib/db'
 import { NextResponse } from 'next/server'
 import { notifyBookingConfirmed, createBookingReminder } from '@/lib/notifications'
-
+// AI korišten za pomoć pri stvaranju rute za potvrdu rezervacije
 export async function POST(request: Request) {
   try {
     const { userId } = await auth()

@@ -3,7 +3,7 @@ import sql from '@/lib/db'
 import { NextResponse } from 'next/server'
 import { stripe } from '@/lib/stripe'
 import { deleteBookingReminder } from '@/lib/notifications'
-
+// AI korišten za pomoć pri stvaranju rute za otkazivanje rezervacije
 export async function POST(request: Request) {
   try {
     const { userId } = await auth()

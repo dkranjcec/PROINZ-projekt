@@ -11,6 +11,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion'
 
 interface Player {
   firstname: string
@@ -35,8 +41,34 @@ interface Booking {
   price: number | null
 }
 
+interface RecurringBooking {
+  recurringid: number
+  terenid: number
+  clubid: string
+  terenname: string
+  clubname: string
+  day_of_week: number
+  start_time: string
+  end_time: string
+  price: string | number // Can be string from database
+  is_active: boolean
+  stripe_subscription_id: string
+}
+
 interface EditablePlayerDashboardProps {
   player: Player
+}
+
+// Generate time options in 30-minute intervals
+function generateTimeOptions() {
+  const times: string[] = []
+  for (let hour = 0; hour < 24; hour++) {
+    for (let minute = 0; minute < 60; minute += 30) {
+      const timeString = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`
+      times.push(timeString)
+    }
+  }
+  return times
 }
 
 export default function EditablePlayerDashboard({ player }: EditablePlayerDashboardProps) {
@@ -52,8 +84,15 @@ export default function EditablePlayerDashboard({ player }: EditablePlayerDashbo
   const [error, setError] = useState<string | null>(null)
   const [pastBookings, setPastBookings] = useState<Booking[]>([])
   const [upcomingBookings, setUpcomingBookings] = useState<Booking[]>([])
+  const [recurringBookings, setRecurringBookings] = useState<RecurringBooking[]>([])
   const [loadingBookings, setLoadingBookings] = useState(true)
   const [cancellingId, setCancellingId] = useState<string | null>(null)
+  const [cancellingRecurringId, setCancellingRecurringId] = useState<number | null>(null)
+  const [isMounted, setIsMounted] = useState(false)
+
+  useEffect(() => {
+    setIsMounted(true)
+  }, [])
 
   useEffect(() => {
     fetchBookings()
@@ -61,11 +100,20 @@ export default function EditablePlayerDashboard({ player }: EditablePlayerDashbo
 
   async function fetchBookings() {
     try {
-      const response = await fetch('/api/booking/my-bookings')
-      if (response.ok) {
-        const data = await response.json()
+      const [bookingsRes, recurringRes] = await Promise.all([
+        fetch('/api/booking/my-bookings'),
+        fetch('/api/recurring-booking/my-recurring')
+      ])
+      
+      if (bookingsRes.ok) {
+        const data = await bookingsRes.json()
         setPastBookings(data.past || [])
         setUpcomingBookings(data.upcoming || [])
+      }
+      
+      if (recurringRes.ok) {
+        const data = await recurringRes.json()
+        setRecurringBookings(data.recurringBookings || [])
       }
     } catch (err) {
       console.error('Error fetching bookings:', err)
@@ -112,6 +160,38 @@ export default function EditablePlayerDashboard({ player }: EditablePlayerDashbo
     }
   }
 
+  async function handleCancelRecurring(recurringBooking: RecurringBooking) {
+    if (!confirm('Are you sure you want to cancel this recurring booking? All future instances will be cancelled and your Stripe subscription will be cancelled.')) {
+      return
+    }
+
+    setCancellingRecurringId(recurringBooking.recurringid)
+    try {
+      const response = await fetch('/api/recurring-booking/cancel', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          recurringid: recurringBooking.recurringid
+        })
+      })
+
+      const data = await response.json()
+      
+      if (!response.ok) {
+        alert(data.error || 'Failed to cancel recurring booking')
+        return
+      }
+
+      alert(data.message || 'Recurring booking cancelled successfully')
+      fetchBookings()
+    } catch (err) {
+      console.error('Error cancelling recurring booking:', err)
+      alert('Failed to cancel recurring booking')
+    } finally {
+      setCancellingRecurringId(null)
+    }
+  }
+
   function formatTime(time: string) {
     return time.substring(0, 5)
   }
@@ -119,6 +199,13 @@ export default function EditablePlayerDashboard({ player }: EditablePlayerDashbo
   async function handleSave() {
     setIsSaving(true)
     setError(null)
+
+    // Validate preferred time interval
+    if (preferredTimeStart && preferredTimeEnd && preferredTimeStart >= preferredTimeEnd) {
+      setError('Preferred start time must be before end time')
+      setIsSaving(false)
+      return
+    }
 
     try {
       const response = await fetch('/api/player/update', {
@@ -244,19 +331,31 @@ export default function EditablePlayerDashboard({ player }: EditablePlayerDashbo
         <div className="space-y-3">
           {isEditing ? (
             <div className="flex gap-2 items-center">
-              <input
-                type="time"
-                value={preferredTimeStart}
-                onChange={(e) => setPreferredTimeStart(e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-green-500"
-              />
+              <Select value={preferredTimeStart} onValueChange={setPreferredTimeStart}>
+                <SelectTrigger className="w-[140px]">
+                  <SelectValue placeholder="Start time" />
+                </SelectTrigger>
+                <SelectContent>
+                  {generateTimeOptions().map((time) => (
+                    <SelectItem key={`start-${time}`} value={time}>
+                      {time}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               <span className="text-gray-500">-</span>
-              <input
-                type="time"
-                value={preferredTimeEnd}
-                onChange={(e) => setPreferredTimeEnd(e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-green-500"
-              />
+              <Select value={preferredTimeEnd} onValueChange={setPreferredTimeEnd}>
+                <SelectTrigger className="w-[140px]">
+                  <SelectValue placeholder="End time" />
+                </SelectTrigger>
+                <SelectContent>
+                  {generateTimeOptions().map((time) => (
+                    <SelectItem key={`end-${time}`} value={time}>
+                      {time}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           ) : (
             <p className="text-gray-600">
@@ -330,23 +429,84 @@ export default function EditablePlayerDashboard({ player }: EditablePlayerDashbo
           </div>
 
           <div className="bg-white rounded-lg shadow p-6 mb-6">
-            <h2 className="text-xl font-semibold mb-4">Past Bookings</h2>
+            <h2 className="text-xl font-semibold mb-4">🔄 Recurring Bookings</h2>
             {loadingBookings ? (
-              <p className="text-gray-600">Loading bookings...</p>
-            ) : pastBookings.length === 0 ? (
-              <p className="text-gray-600">No past bookings</p>
+              <p className="text-gray-600">Loading...</p>
+            ) : recurringBookings.length === 0 ? (
+              <p className="text-gray-600">No active recurring bookings</p>
             ) : (
               <div className="space-y-3">
-                {pastBookings.map((booking, index) => (
-                  <div key={`past-${booking.terminid}-${index}`} className="border border-gray-200 rounded-lg p-4 bg-gray-50">
-                    <h3 className="font-semibold text-gray-900">{booking.terenname}</h3>
-                    <p className="text-sm text-gray-600">{booking.clubname}</p>
-                    <p className="text-sm text-gray-600 mt-1">
-                      {new Date(booking.starttime).toLocaleString()} - {new Date(booking.endtime).toLocaleTimeString()}
-                    </p>
-                  </div>
-                ))}
+                {recurringBookings.map((recurring) => {
+                  const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+                  const dayName = daysOfWeek[recurring.day_of_week === 7 ? 0 : recurring.day_of_week]
+                  
+                  return (
+                    <div key={`recurring-${recurring.recurringid}`} className="border border-purple-200 bg-purple-50 rounded-lg p-4">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <h3 className="font-semibold text-gray-900">{recurring.terenname}</h3>
+                          <p className="text-sm text-gray-600">{recurring.clubname}</p>
+                          <p className="text-sm text-gray-700 mt-1 font-medium">
+                            Every {dayName} at {recurring.start_time.substring(0, 5)} - {recurring.end_time.substring(0, 5)}
+                          </p>
+                          <p className="text-sm text-gray-600 mt-1">
+                            €{parseFloat(recurring.price?.toString() || '0').toFixed(2)} per booking (billed weekly, 6 days in advance)
+                          </p>
+                          <p className="text-xs text-purple-700 mt-2">
+                            ✓ Active subscription - future bookings will appear automatically
+                          </p>
+                        </div>
+                        <Button
+                          onClick={() => handleCancelRecurring(recurring)}
+                          disabled={cancellingRecurringId === recurring.recurringid}
+                          variant="destructive"
+                          size="sm"
+                        >
+                          {cancellingRecurringId === recurring.recurringid ? 'Cancelling...' : 'Cancel Recurring'}
+                        </Button>
+                      </div>
+                    </div>
+                  )
+                })}
               </div>
+            )}
+          </div>
+
+          <div className="bg-white rounded-lg shadow p-6 mb-6">
+            {isMounted && (
+              <Accordion type="single" collapsible className="w-full">
+                <AccordionItem value="past-bookings" className="border-none">
+                  <AccordionTrigger className="hover:no-underline py-0">
+                    <div className="flex items-center gap-2">
+                      <h2 className="text-xl font-semibold">Past Bookings</h2>
+                      {pastBookings.length > 0 && (
+                        <span className="text-sm font-normal text-gray-500">
+                          ({pastBookings.length})
+                        </span>
+                      )}
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent>
+                  {loadingBookings ? (
+                    <p className="text-gray-600 mt-4">Loading bookings...</p>
+                  ) : pastBookings.length === 0 ? (
+                    <p className="text-gray-600 mt-4">No past bookings</p>
+                  ) : (
+                    <div className="space-y-3 mt-4">
+                      {pastBookings.map((booking, index) => (
+                        <div key={`past-${booking.terminid}-${index}`} className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                          <h3 className="font-semibold text-gray-900">{booking.terenname}</h3>
+                          <p className="text-sm text-gray-600">{booking.clubname}</p>
+                          <p className="text-sm text-gray-600 mt-1">
+                            {new Date(booking.starttime).toLocaleString()} - {new Date(booking.endtime).toLocaleTimeString()}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
             )}
           </div>
 

@@ -2,6 +2,8 @@ export interface Club {
   userid: string
   clubname: string
   clubaddress: string
+  latitude: number | null
+  longitude: number | null
 }
 
 export function filterClubs(clubs: Club[], searchQuery: string): Club[] {

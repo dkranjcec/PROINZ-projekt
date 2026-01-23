@@ -7,26 +7,30 @@ interface PaymentModalProps {
   courtName: string
   courtPrice: number
   duration: number // in hours
+  canBeRecurring: boolean // true if 1 hour duration
   onClose: () => void
-  onPayInPerson: () => void
-  onPayOnline: () => void
+  onPayInPerson: (makeRecurring: boolean) => Promise<void>
+  onPayOnline: (makeRecurring: boolean) => Promise<void>
 }
 
 export default function PaymentModal({
   courtName,
   courtPrice,
   duration,
+  canBeRecurring,
   onClose,
   onPayInPerson,
   onPayOnline
 }: PaymentModalProps) {
   const [loading, setLoading] = useState(false)
+  const [makeRecurring, setMakeRecurring] = useState(false)
   const totalPrice = courtPrice * duration
+  const platformFee = 2.00
 
   const handlePayInPerson = async () => {
     setLoading(true)
     try {
-      await onPayInPerson()
+      await onPayInPerson(makeRecurring)
     } finally {
       setLoading(false)
     }
@@ -35,7 +39,7 @@ export default function PaymentModal({
   const handlePayOnline = async () => {
     setLoading(true)
     try {
-      await onPayOnline()
+      await onPayOnline(makeRecurring)
     } finally {
       setLoading(false)
     }
@@ -61,10 +65,51 @@ export default function PaymentModal({
           <p className="text-sm text-gray-600 mt-2">
             Duration: {duration} hour{duration !== 1 ? 's' : ''}
           </p>
-          <p className="text-lg font-bold text-green-600 mt-2">
-            Total: €{totalPrice.toFixed(2)}
-          </p>
+          <div className="mt-3 pt-3 border-t border-gray-200">
+            <div className="flex justify-between text-sm">
+              <span>Court rental ({duration}h)</span>
+              <span>€{totalPrice.toFixed(2)}</span>
+            </div>
+            <div className="flex justify-between text-sm mt-1">
+              <span>Platform fee</span>
+              <span>€{platformFee.toFixed(2)}</span>
+            </div>
+            <div className="flex justify-between font-bold text-lg text-green-600 mt-2 pt-2 border-t border-gray-300">
+              <span>Total</span>
+              <span>€{(totalPrice + platformFee).toFixed(2)}</span>
+            </div>
+          </div>
         </div>
+
+        {canBeRecurring && (
+          <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <label className="flex items-start gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={makeRecurring}
+                onChange={(e) => setMakeRecurring(e.target.checked)}
+                className="mt-1 h-5 w-5 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
+              />
+              <div>
+                <p className="font-semibold text-gray-900">🔄 Make this recurring?</p>
+                <p className="text-sm text-gray-600 mt-1">
+                  Book this same time slot every week. You'll be charged 6 days before each booking.
+                  {makeRecurring && (
+                    <span className="block mt-2 text-blue-700 font-medium">
+                      ✓ Weekly charge: €{(totalPrice + platformFee).toFixed(2)}
+                    </span>
+                  )}
+                </p>
+              </div>
+            </label>
+          </div>
+        )}
+
+        {!canBeRecurring && (
+          <div className="mb-4 p-3 bg-gray-100 border border-gray-300 rounded text-sm text-gray-600">
+            💡 Recurring bookings require at least 1 hour
+          </div>
+        )}
 
         <div className="space-y-3 mb-6">
           <p className="text-sm font-medium text-gray-700">Choose payment method:</p>

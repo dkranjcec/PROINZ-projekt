@@ -1,7 +1,7 @@
 import { auth } from '@clerk/nextjs/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { uploadToS3 } from '@/lib/s3'
-
+// AI korišten za pomoć pri stvaranju rute za uploadanje slike terena
 export async function POST(request: NextRequest) {
   try {
     const { userId } = await auth()

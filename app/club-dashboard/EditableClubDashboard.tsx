@@ -3,6 +3,13 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import AddressAutocomplete from '../components/AddressAutocomplete'
 
 
@@ -36,6 +43,18 @@ interface EditableClubDashboardProps {
   workHours: WorkHour[]
   content: Content
   clubPhotos: ClubPhoto[]
+}
+
+// Generate time options in 30-minute intervals
+function generateTimeOptions() {
+  const times: string[] = []
+  for (let hour = 0; hour < 24; hour++) {
+    for (let minute = 0; minute < 60; minute += 30) {
+      const timeString = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`
+      times.push(timeString)
+    }
+  }
+  return times
 }
 
 export default function EditableClubDashboard({ club, workHours, content, clubPhotos }: EditableClubDashboardProps) {
@@ -262,19 +281,37 @@ export default function EditableClubDashboard({ club, workHours, content, clubPh
                 <span className="font-medium text-gray-700 w-32">{dayNames[wh.day_of_week - 1]}</span>
                 {isEditing ? (
                   <div className="flex gap-2 items-center">
-                    <input
-                      type="time"
-                      value={wh.start_time || ''}
-                      onChange={(e) => updateWorkHour(wh.day_of_week, 'start_time', e.target.value)}
-                      className="px-3 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-green-500"
-                    />
+                    <Select 
+                      value={wh.start_time || ''} 
+                      onValueChange={(value) => updateWorkHour(wh.day_of_week, 'start_time', value)}
+                    >
+                      <SelectTrigger className="w-[120px]">
+                        <SelectValue placeholder="Start" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {generateTimeOptions().map((time) => (
+                          <SelectItem key={`start-${wh.day_of_week}-${time}`} value={time}>
+                            {time}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                     <span className="text-gray-500">-</span>
-                    <input
-                      type="time"
-                      value={wh.end_time || ''}
-                      onChange={(e) => updateWorkHour(wh.day_of_week, 'end_time', e.target.value)}
-                      className="px-3 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-green-500"
-                    />
+                    <Select 
+                      value={wh.end_time || ''} 
+                      onValueChange={(value) => updateWorkHour(wh.day_of_week, 'end_time', value)}
+                    >
+                      <SelectTrigger className="w-[120px]">
+                        <SelectValue placeholder="End" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {generateTimeOptions().map((time) => (
+                          <SelectItem key={`end-${wh.day_of_week}-${time}`} value={time}>
+                            {time}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                     <Button
                       onClick={() => removeWorkHour(wh.day_of_week)}
                       variant="destructive"

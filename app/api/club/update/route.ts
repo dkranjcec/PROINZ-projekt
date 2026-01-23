@@ -23,6 +23,21 @@ export async function POST(request: Request) {
     `
 
     if (workHours && Array.isArray(workHours)) {
+
+      for (const wh of workHours) {
+        if (!wh.day_of_week || !wh.start_time || !wh.end_time) {
+          return NextResponse.json({ error: 'Invalid work hours: missing required fields' }, { status: 400 })
+        }
+        
+        if (wh.start_time >= wh.end_time) {
+          return NextResponse.json({ error: 'Invalid work hours: start time must be before end time' }, { status: 400 })
+        }
+        
+        if (wh.day_of_week < 1 || wh.day_of_week > 7) {
+          return NextResponse.json({ error: 'Invalid work hours: day_of_week must be between 1 and 7' }, { status: 400 })
+        }
+      }
+      
       await sql`
         DELETE FROM workhours WHERE userid = ${userId}
       `

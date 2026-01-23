@@ -1,9 +1,10 @@
 import sql from '@/lib/db'
 import { NextResponse } from 'next/server'
 
+// Simple daily cron - just sends booking reminders
 export async function GET(request: Request) {
   try {
-    // Verify this is called by authorized source (Vercel Cron or manual with secret)
+    // Verify cron secret
     const authHeader = request.headers.get('authorization')
     if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -11,8 +12,7 @@ export async function GET(request: Request) {
 
     const now = new Date()
 
-    // Find notifications scheduled for now or earlier that haven't been "sent" yet
-    // We'll look for notification text containing "Reminder:" that are scheduled
+    // Find scheduled notifications
     const pendingNotifications = await sql`
       SELECT * FROM notification
       WHERE schedtime <= ${now.toISOString()}
@@ -25,10 +25,8 @@ export async function GET(request: Request) {
 
     for (const notification of pendingNotifications) {
       try {
-        // Extract the actual message (remove SCHEDULED: prefix)
         const actualMessage = notification.notitext.replace('SCHEDULED:', '')
         
-        // Update the notification to mark it as sent
         await sql`
           UPDATE notification
           SET notitext = ${actualMessage},
@@ -38,17 +36,17 @@ export async function GET(request: Request) {
 
         sent++
       } catch (error) {
-        console.error('Error sending scheduled notification:', notification, error)
+        console.error('Error sending notification:', error)
       }
     }
 
     return NextResponse.json({ 
       success: true, 
-      message: `Sent ${sent} scheduled notifications`,
-      checked: pendingNotifications.length
+      notificationsSent: sent,
+      timestamp: now.toISOString()
     })
   } catch (error) {
-    console.error('Error in notification scheduler cron:', error)
+    console.error('Error in booking reminders cron:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

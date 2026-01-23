@@ -1,7 +1,6 @@
 import { auth } from '@clerk/nextjs/server'
 import { redirect } from 'next/navigation'
 import sql from '@/lib/db'
-import Header from './components/Header'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
@@ -18,7 +17,9 @@ export default async function Home() {
       redirect('/choose-account-type')
     }
     
-    if (existingUser.role === 'club') {
+    if (existingUser.role === 'admin') {
+      redirect('/admin-dashboard')
+    } else if (existingUser.role === 'club') {
       redirect('/club-dashboard')
     } else if (existingUser.role === 'player') {
       redirect('/dashboard')
@@ -26,9 +27,7 @@ export default async function Home() {
   }
 
   return (
-    <>
-      <Header />
-      <div className="min-h-screen flex flex-col items-center justify-center p-8">
+    <div className="flex flex-col items-center justify-center p-8" style={{ minHeight: 'calc(100vh - 80px)' }}>
         <main className="text-center">
           <h1 className="text-4xl font-bold mb-4">
             Welcome to PadelTime
@@ -50,6 +49,5 @@ export default async function Home() {
           )}
         </main>
       </div>
-    </>
   )
 }

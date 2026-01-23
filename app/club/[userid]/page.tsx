@@ -3,7 +3,6 @@ import { redirect } from 'next/navigation'
 import sql from '@/lib/db'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
-import Header from '../../components/Header'
 import ReviewButton from './ReviewButton'
 
 export const dynamic = 'force-dynamic'
@@ -115,8 +114,6 @@ export default async function ClubPage({ params }: PageProps) {
   }
 
   return (
-    <>
-      <Header />
       <div className="min-h-screen p-8 bg-gray-50">
         <div className="max-w-6xl mx-auto">
           <div className="flex justify-between items-center mb-6">
@@ -355,6 +352,5 @@ export default async function ClubPage({ params }: PageProps) {
           )}
         </div>
       </div>
-    </>
   )
 }

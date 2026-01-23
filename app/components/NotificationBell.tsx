@@ -86,7 +86,14 @@ export default function NotificationBell() {
                     <div className="flex-1">
                       <p className="text-sm text-gray-900">{notification.notitext}</p>
                       <p className="text-xs text-gray-500 mt-1">
-                        {new Date(notification.schedtime).toLocaleString()}
+                        {new Date(notification.schedtime).toLocaleString(undefined, {
+                          day: '2-digit',
+                          month: 'short',
+                          year: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit',
+                          hour12: false
+                        })}
                       </p>
                     </div>
                     <button

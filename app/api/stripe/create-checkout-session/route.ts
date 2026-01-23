@@ -2,6 +2,7 @@ import { auth } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
 import { stripe } from '@/lib/stripe'
 import sql from '@/lib/db'
+import { validateBookingWithinWorkHours } from '@/lib/workhours-utils'
 
 export async function POST(request: Request) {
   try {
@@ -37,10 +38,64 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Cannot create bookings in the past' }, { status: 400 })
     }
 
-    // Calculate duration and total price
+    // Calculate duration
     const start = new Date(starttime)
     const end = new Date(endtime)
     const durationHours = (end.getTime() - start.getTime()) / (1000 * 60 * 60)
+
+    // Validate minimum 1-hour booking duration
+    if (durationHours < 1) {
+      return NextResponse.json({ error: 'Minimum booking duration is 1 hour' }, { status: 400 })
+    }
+
+    // Validate booking is within club work hours
+    const workHoursValidation = await validateBookingWithinWorkHours(clubid, starttime, endtime)
+    if (!workHoursValidation.valid) {
+      return NextResponse.json({ error: workHoursValidation.error }, { status: 400 })
+    }
+
+    // Check for conflicts with existing bookings
+    const existingBookings = await sql`
+      SELECT starttime, endtime FROM termin 
+      WHERE terenid = ${terenid}
+    `
+
+    const { hasAnyOverlap } = await import('@/lib/booking-utils')
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    if (hasAnyOverlap(existingBookings as any, { starttime, endtime })) {
+      return NextResponse.json({ error: 'This time slot is already booked' }, { status: 409 })
+    }
+
+    // Check for conflicts with recurring bookings
+    const recurringBookings = await sql`
+      SELECT day_of_week, start_time, end_time
+      FROM recurring_booking
+      WHERE terenid = ${terenid}
+        AND is_active = true
+    `
+
+    const bookingDayOfWeek = bookingStart.getDay() === 0 ? 7 : bookingStart.getDay()
+    const bookingStartTime = starttime.split('T')[1].substring(0, 5) // HH:MM
+    const bookingEndTime = endtime.split('T')[1].substring(0, 5) // HH:MM
+
+    for (const recurring of recurringBookings) {
+      if (recurring.day_of_week === bookingDayOfWeek) {
+        const recurringStart = recurring.start_time.substring(0, 5)
+        const recurringEnd = recurring.end_time.substring(0, 5)
+        
+        if (
+          (bookingStartTime >= recurringStart && bookingStartTime < recurringEnd) ||
+          (bookingEndTime > recurringStart && bookingEndTime <= recurringEnd) ||
+          (bookingStartTime <= recurringStart && bookingEndTime >= recurringEnd)
+        ) {
+          return NextResponse.json({ 
+            error: 'This time slot conflicts with an active recurring booking' 
+          }, { status: 409 })
+        }
+      }
+    }
+
+    // Calculate total price
     const bookingPrice = court.price * durationHours
     const platformFee = 2.00 // €2 platform fee
     const totalPrice = bookingPrice + platformFee

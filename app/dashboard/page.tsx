@@ -20,6 +20,10 @@ export default async function Dashboard() {
     redirect('/choose-account-type')
   }
 
+  if (user.role === 'admin') {
+    redirect('/admin-dashboard')
+  }
+
   if (user.role === 'club') {
     redirect('/club-dashboard')
   }
@@ -28,6 +32,6 @@ export default async function Dashboard() {
     redirect('/player-dashboard')
   }
 
-  // Fallback if role is neither club nor player
+  // Fallback if role is neither club, player, nor admin
   redirect('/choose-account-type')
 }

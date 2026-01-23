@@ -12,7 +12,6 @@ export async function GET() {
 
     const now = new Date()
 
-    // Get upcoming bookings (future bookings)
     const upcomingBookings = await sql`
       SELECT t.*, ter.terenname, ter.price, c.clubname
       FROM termin t
@@ -22,7 +21,6 @@ export async function GET() {
       ORDER BY t.starttime ASC
     `
 
-    // Get past bookings
     const pastBookings = await sql`
       SELECT t.*, ter.terenname, ter.price, c.clubname
       FROM termin t

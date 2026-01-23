@@ -1,7 +1,7 @@
 import { auth } from '@clerk/nextjs/server'
 import sql from '@/lib/db'
 import { NextResponse } from 'next/server'
-
+// AI korišten za pomoć pri stvaranju rute za brisanje rezervacije
 export async function DELETE(request: Request) {
   try {
     const { userId } = await auth()

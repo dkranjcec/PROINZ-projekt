@@ -11,7 +11,12 @@ export async function GET() {
     }
 
     const notifications = await sql`
-      SELECT * FROM notification 
+      SELECT 
+        notiid,
+        userid,
+        notitext,
+        schedtime::timestamptz as schedtime
+      FROM notification 
       WHERE userid = ${userId}
       ORDER BY schedtime DESC
       LIMIT 20

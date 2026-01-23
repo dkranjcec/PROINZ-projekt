@@ -2,7 +2,6 @@ import { auth } from '@clerk/nextjs/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
-import Header from '@/app/components/Header'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
@@ -25,8 +24,6 @@ export default async function BookingSuccess({ searchParams }: PageProps) {
   const sessionId = params.session_id
 
   return (
-    <>
-      <Header />
       <div className="min-h-screen flex flex-col items-center justify-center p-8 bg-gray-50">
         <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8 text-center">
           <div className="mb-6">
@@ -73,6 +70,5 @@ export default async function BookingSuccess({ searchParams }: PageProps) {
           </div>
         </div>
       </div>
-    </>
   )
 }

@@ -3,7 +3,6 @@ import { redirect } from 'next/navigation'
 import sql from '@/lib/db'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
-import Header from '../components/Header'
 import EditableClubDashboard from './EditableClubDashboard'
 
 export const dynamic = 'force-dynamic'
@@ -48,8 +47,6 @@ export default async function ClubDashboard() {
   }
 
   return (
-    <>
-      <Header />
       <div className="min-h-screen p-8">
         <div className="max-w-4xl mx-auto">
           <div className="flex justify-between items-center mb-6">
@@ -83,6 +80,5 @@ export default async function ClubDashboard() {
           </div>
         </div>
       </div>
-    </>
   )
 }

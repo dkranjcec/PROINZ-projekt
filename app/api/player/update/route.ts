@@ -12,6 +12,11 @@ export async function POST(request: Request) {
 
     const { firstName, lastName, phoneNumber, preferredTimeStart, preferredTimeEnd, skillLevel } = await request.json()
 
+    // Validate preferred time interval
+    if (preferredTimeStart && preferredTimeEnd && preferredTimeStart >= preferredTimeEnd) {
+      return NextResponse.json({ error: 'Preferred start time must be before end time' }, { status: 400 })
+    }
+
     await sql`
       UPDATE player 
       SET firstname = ${firstName}, 

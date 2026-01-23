@@ -1,7 +1,6 @@
 import { auth } from '@clerk/nextjs/server'
 import { redirect } from 'next/navigation'
 import sql from '@/lib/db'
-import Header from '../components/Header'
 import CourtBookingsManagement from './CourtBookingsManagement'
 
 export default async function CourtBookingsPage() {
@@ -65,7 +64,6 @@ export default async function CourtBookingsPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Header />
       <div className="container mx-auto py-8 px-4">
         <div className="max-w-7xl mx-auto">
           <h1 className="text-3xl font-bold mb-6">Court Bookings</h1>
